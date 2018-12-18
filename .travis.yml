@@ -1,0 +1,37 @@
+dist: bionic
+sudo: false
+cache:
+    directories:
+        - $HOME/.cache/pip
+        - $HOME/.cache/pipenv
+
+language: python
+python:
+    # First value is default
+    - "3.6"
+
+install:
+    - pip install pipenv
+    - pipenv install --dev --skip-lock
+
+script:
+    - pipenv run fulltest
+
+jobs:
+    include:
+        - stage: Test
+          name: Test docs
+          install:
+              - pip install pipenv sphinx
+              - pipenv install --skip-lock
+          script:
+              - pipenv run doctest
+              - pipenv run build-docs
+
+        - stage: Coverage
+          name: сodecov
+          before_script:
+              - pip install codecov
+          script:
+              - pytest --cov
+              - codecov --required

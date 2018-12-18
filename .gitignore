@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+/build/
+/dist/
+/*.egg-info/
+
+# Editors
+/.idea/
+
+# pipenv
+/.env
+/Pipfile.lock
+
+# pytest
+/.coverage
+/.pytest_cache/
+
+# mypy
+/.mypy_cache/
+
+# tox
+/.tox/
+
+# Sphinx
+/docs/_build/
