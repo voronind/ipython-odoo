@@ -11,10 +11,8 @@ pytest = "*"
 pytest-cov = "*"
 pytest-flake8 = "*"
 pytest-pythonpath = "*"
-mypy = "*"
 sphinx = "*"
 sphinx-autobuild = "*"
-bumpr = "*"
 
 [requires]
 python_version = "2.7"
