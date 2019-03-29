@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 
 [dev-packages]
-ipython = "*"
+ipdb = "*"
 pytest = "*"
 pytest-cov = "*"
 pytest-flake8 = "*"
