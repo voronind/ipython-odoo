@@ -1,4 +1,4 @@
-
+# coding=utf8
 __import__('os').environ['TZ'] = 'UTC'
 __import__('pkg_resources').declare_namespace('odoo.addons')
 
@@ -186,7 +186,7 @@ def get_search_func_kwargs(model):
     return kwargs
 
 
-def split_var_name(self, var_name):
+def split_kwarg_name(self, var_name):
     for suffix in SUFFIX_TO_OPERATOR:
         if var_name.endswith(suffix):
             field_name = var_name[:-len(suffix)]
@@ -196,7 +196,53 @@ def split_var_name(self, var_name):
                 operator = SUFFIX_TO_OPERATOR[suffix]
             return field_name, operator
 
-    assert 1, 'Incorrect var name'
+    assert False, 'Incorrect var name'
+
+
+# TODO Make keyword-only arguments
+search_def = '''
+def search(self, ids=None, {kwargs}):
+    local_vars = locals()
+    domains = []
+    for kwarg_name in {kwargs_set}:
+        kwarg_value = local_vars[kwarg_name]
+        if kwarg_value is None:
+            continue
+        kwarg_name, operator = split_kwarg_name(self, kwarg_name)
+        domains.append((kwarg_name, operator, kwarg_value))
+
+    if ids:
+        if domains:
+            raise ValueError('No ids and kwargs together')
+    
+        if isinstance(ids, (str, unicode)):
+            domains.append(('name', 'ilike', ids))
+        else:
+            return self.browse(ids)
+            
+    return self.search(domains)
+'''
+
+def model_str(self):
+    if 1 <= len(self) <= 1:
+        # print('<3')
+        ids_part = []
+        for record in self:
+            name = record.name
+            if len(name) > 40:
+                # name = name[:39] + u'…'
+                name = name[:39] + '...'
+            # strip u in u'...'
+            name = repr(name)[1:]
+            ids_part.append('{}: {}'.format(record.id, name))
+        result = '{}({})'.format(self._name, ', '.join(ids_part))
+
+        # return result.encode('utf8')
+        return result
+
+    # print('str super')
+    # BaseModel.__str__
+    return "%s%s" % (self._name, getattr(self, '_ids', ""))
 
 
 def patch_models(env):
@@ -208,26 +254,17 @@ def patch_models(env):
 
         kwarg_names = get_search_func_kwargs(model)
 
-        kwargs = ', '.join('{}=None'.format(name) for name in kwarg_names)
-        kwargs_list = '[{}]'.format(', '.join(map(repr, kwarg_names)))
+        kwargs_def = ', '.join(kwarg_name + '=None' for kwarg_name in kwarg_names)
+        kwargs_set = '{' + ','.join(map(repr, kwarg_names)) + '}'
 
-        search_def = '''
-def search(self, {kwargs}, *args):
-    if args:
-        return self.browse(*args)
-        
-    domains = []
-    for var_name in {kwargs_list}:
-        value = locals()[var_name]
-        if value is None:
-            continue
-        var_name, operator = split_var_name(self, var_name)
-        domains.append((var_name, operator, value))
-    return self.search(domains)
-        '''.format(kwargs=kwargs, kwargs_list=kwargs_list)
+        model_search_def = search_def.format(kwargs=kwargs_def, kwargs_set=kwargs_set)
 
-        exec(search_def)
+        exec(model_search_def)
         model.__class__.__call__ = search
+
+        # model.__class__._origin__str__ = model.__class__.__str__
+        model.__class__.__str__ = model_str
+        model.__class__.__repr__ = model_str
 
 # def get_odoo_domain(domain):
 #     # if domain.left ...
