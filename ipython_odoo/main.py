@@ -224,26 +224,33 @@ def search(self, ids=None, {kwargs}):
 '''
 
 def model_str(self):
-    if 1 <= len(self) <= 1:
-        # print('<3')
+    if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
             name = record.name
             if len(name) > 40:
-                # name = name[:39] + u'…'
                 name = name[:39] + '...'
             # strip u in u'...'
             name = repr(name)[1:]
             ids_part.append('{}: {}'.format(record.id, name))
         result = '{}({})'.format(self._name, ', '.join(ids_part))
-
         # return result.encode('utf8')
         return result
 
-    # print('str super')
-    # BaseModel.__str__
     return "%s%s" % (self._name, getattr(self, '_ids', ""))
 
+
+def model_unicode(self):
+    if 1 <= len(self) <= 1 and 'name' in self._fields:
+        ids_part = []
+        for record in self:
+            name = record.name
+            if len(name) > 40:
+                name = name[:39] + u'…'
+            ids_part.append(u"{}: '{}'".format(record.id, name))
+        return u'{}({})'.format(self._name, u', '.join(ids_part))
+
+    return u"%s%s" % (self._name, getattr(self, '_ids', ""))
 
 def patch_models(env):
 
@@ -264,6 +271,7 @@ def patch_models(env):
 
         # model.__class__._origin__str__ = model.__class__.__str__
         model.__class__.__str__ = model_str
+        model.__class__.__unicode__ = model_unicode
         model.__class__.__repr__ = model_str
 
 # def get_odoo_domain(domain):
@@ -469,6 +477,9 @@ def init_odoo():
     # Environment.manage().__exit__():
 
 
+from .tables import MyMagics
+
+
 def load_ipython_extension(ipython):
     # The `ipython` argument is the currently active `InteractiveShell`
     # instance, which can be used in any way. This allows you to register
@@ -477,6 +488,9 @@ def load_ipython_extension(ipython):
     ipython.push('get_user_permissions')
     ipython.push({'i': ipython})
     ipython.push(init_odoo())
+
+    # ipython.register_magic_function(records_table, magic_name='t')
+    ipython.register_magics(MyMagics)
 
 
 def unload_ipython_extension(ipython):
