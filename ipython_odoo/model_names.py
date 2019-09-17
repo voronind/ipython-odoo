@@ -27,7 +27,7 @@ CONVERT_ENV_KEYS = {
     'account.fiscal.position.tax.template': 'position_tax_template',
     'account.fiscal.position.template': 'position_template',
     'account.full.reconcile': 'full_reconcile',      # account.move.line.reconcile, account.partial.reconcile
-    'account.invoice': 'account_invoice',            # membership.invoice
+    'account.invoice': 'invoice',                    # membership.invoice
     'account.invoice.cancel': 'invoice_cancel',      # mrp.repair.cancel
     'account.invoice.confirm': 'invoice_confirm',    # event.confirm
     'account.invoice.line': 'invoice_line',
