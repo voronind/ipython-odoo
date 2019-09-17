@@ -2,15 +2,10 @@
 
 from collections import OrderedDict, defaultdict
 
+from odoo.models import LOG_ACCESS_COLUMNS, Model
+
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 
-
-def table(model):
-    vals = model._fields
-    for field_name in model._fields:
-        for obj in model:
-            obj_vals = {field_name}
-            vals.append()
 
 
 def vals(model):
@@ -19,6 +14,10 @@ def vals(model):
 
 
 def prepare_value_for_table(record, field_name):
+
+    if field_name == '__xml_id__':
+        return record.get_xml_id()[record.id]
+
     field = record._fields[field_name]
 
     if field.type == 'binary':
@@ -67,6 +66,37 @@ def print_table(table):
     for row in table:
         print(u' '.join(row))
 
+# TODO skip __xml_id__ row if no data
+PINNED_FIELD_NAMES = [
+    'id',
+    'name',
+    # 'create_date',
+    # 'create_uid',
+    # 'write_date',
+    # 'write_uid',
+]
+
+IGNORE_FIELD_NAMES = set(LOG_ACCESS_COLUMNS)
+IGNORE_FIELD_NAMES.add('__last_update')
+
+def sort_field_names(field_names):
+    top_field_presence = OrderedDict((field_name, False) for field_name in PINNED_FIELD_NAMES)
+    bottom_field_names = []
+
+    for field_name in sorted(field_names):
+        if field_name in top_field_presence:
+            top_field_presence[field_name] = True
+        else:
+            if field_name in IGNORE_FIELD_NAMES:
+                pass
+            else:
+                bottom_field_names.append(field_name)
+
+    top_field_names = [field_name for field_name, is_present in top_field_presence.items() if is_present]
+    top_field_names.insert(1, '__xml_id__')
+
+    return top_field_names + bottom_field_names
+
 
 @magics_class
 class MyMagics(Magics):
@@ -74,13 +104,23 @@ class MyMagics(Magics):
     @line_magic
     def t(self, line):
         """records_table"""
+
+        # import ipdb
+        # ipdb.set_trace()
+
+        if not line.strip():
+            line = '_'
+
         records = eval(line, self.shell.user_ns)
 
-        fields = sorted(records._fields.items())
+        if not isinstance(records, Model):
+            return records
 
-        table = [[''] * (len(records) + 1) for i in range(len(fields))]
+        field_names = sort_field_names(records._fields)
 
-        for row_number, (field_name, field) in enumerate(sorted(records._fields.items())):
+        table = [[''] * (len(records) + 1) for i in range(len(field_names))]
+
+        for row_number, field_name in enumerate(field_names):
             table[row_number][0] = field_name
 
             for col_number, record in enumerate(records, start=1):

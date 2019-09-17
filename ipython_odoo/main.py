@@ -186,11 +186,11 @@ def get_search_func_kwargs(model):
     return kwargs
 
 
-def split_kwarg_name(self, var_name):
+def split_kwarg_name(model, var_name):
     for suffix in SUFFIX_TO_OPERATOR:
         if var_name.endswith(suffix):
             field_name = var_name[:-len(suffix)]
-            if suffix == '_' and self._fields[field_name].type == 'char':
+            if suffix == '_' and model._fields[field_name].type == 'char':
                 operator = 'ilike'
             else:
                 operator = SUFFIX_TO_OPERATOR[suffix]
@@ -201,7 +201,7 @@ def split_kwarg_name(self, var_name):
 
 # TODO Make keyword-only arguments
 search_def = '''
-def search(self, ids=None, {kwargs}):
+def search(self, ids=None, count=False, {kwargs}):
     local_vars = locals()
     domains = []
     for kwarg_name in {kwargs_set}:
@@ -220,7 +220,7 @@ def search(self, ids=None, {kwargs}):
         else:
             return self.browse(ids)
             
-    return self.search(domains)
+    return self.search(domains, count=count)
 '''
 
 def model_str(self):
@@ -228,8 +228,12 @@ def model_str(self):
         ids_part = []
         for record in self:
             name = record.name
+
+            if not name:
+                name = u'---'
+
             if len(name) > 40:
-                name = name[:39] + '...'
+                name = name[:39] + u'...'
             # strip u in u'...'
             name = repr(name)[1:]
             ids_part.append('{}: {}'.format(record.id, name))
@@ -245,12 +249,17 @@ def model_unicode(self):
         ids_part = []
         for record in self:
             name = record.name
+
+            if not name:
+                name = u'---'
+
             if len(name) > 40:
                 name = name[:39] + u'…'
             ids_part.append(u"{}: '{}'".format(record.id, name))
         return u'{}({})'.format(self._name, u', '.join(ids_part))
 
     return u"%s%s" % (self._name, getattr(self, '_ids', ""))
+
 
 def patch_models(env):
 
@@ -377,16 +386,32 @@ def init_odoo():
     # --update=sintez_base,sintez_account,sintez_crm,sintez_mrp,sintez_mrp_production_purchase,sintez_product,sintez_product_cost_bom_auto,sintez_purchase,sintez_sale,sintez_stock
     # """.split())
 
-    odoo_db_name = os.environ['ODOO_DB_NAME']
-    # odoo_db_name = 'clean'
+    # odoo_db_name = os.environ['ODOO_DEV_DB_NAME']
+    # odoo_db_name = 'fix-rule'
+    # odoo_db_name = 'report3'
+    # odoo_db_name = 'fix-bombe-rules'
+    # odoo_db_name = 'sm-po'
+    # odoo_db_name = 'sale-order'
+    # odoo_db_name = 'contact-change-log'
+    # odoo_db_name = 'oktmo'
+    # odoo_db_name = 'competitor'
+    # odoo_db_name = '78'
+    # odoo_db_name = 'ip-service'
+    # odoo_db_name = 'lead'
+    # odoo_db_name = 'head'
+    odoo_db_name = os.environ['DB_NAME']
 
-    update = ('sintez_base,sintez_account,sintez_crm,sintez_mrp,sintez_mrp_production_purchase,'
-              'sintez_product,sintez_product_cost_bom_auto,sintez_purchase,sintez_sale,sintez_stock')
-    # update = 'sintez_crm'
+    # update = ('sintez_base,sintez_account,sintez_crm,sintez_mrp,sintez_mrp_production_purchase,'
+    #           'sintez_product,sintez_product_cost_bom_auto,sintez_purchase,sintez_sale,sintez_stock')
+    # update = ['sintez_crm']
+    update = []
+    extra = ''
 
-    odoo_args = "--database={} --xmlrpc-port=8099 --addons-path=addons,custom_addons " \
-                "--update={}" \
-                "".format(odoo_db_name, update)
+    updates = ' --update={}'.format(update) if update else ''
+
+    # extra = ' --log-level=debug_sql'
+
+    odoo_args = "--database={} --xmlrpc-port=8099 --addons-path=addons,custom_addons ".format(odoo_db_name) + updates + extra
 
     odoo.tools.config.parse_config(odoo_args.split())
 
@@ -484,7 +509,7 @@ def load_ipython_extension(ipython):
     # The `ipython` argument is the currently active `InteractiveShell`
     # instance, which can be used in any way. This allows you to register
     # new magics or aliases, for example.
-    print('Init Odoo 3')
+    print('Init Odoo...')
     ipython.push('get_user_permissions')
     ipython.push({'i': ipython})
     ipython.push(init_odoo())

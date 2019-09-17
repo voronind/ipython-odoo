@@ -151,10 +151,10 @@ CONVERT_ENV_KEYS = {
     'ir.logging': 'logging',
     'ir.mail_server': 'mail_server',
     'ir.model': 'model',                             # account.reconcile.model
-    'ir.model.access': 'model_access',
+    'ir.model.access': 'access',
     'ir.model.constraint': 'model_constraint',
     'ir.model.data': 'model_data',
-    'ir.model.fields': 'model_fields',               # subscription.document.fields
+    'ir.model.fields': 'fields',               # subscription.document.fields
     'ir.model.relation': 'model_relation',
     'ir.module.category': 'module_category',
     'ir.module.module': 'module_module',             # base.import.module
