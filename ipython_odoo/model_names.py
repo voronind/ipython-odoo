@@ -154,11 +154,11 @@ CONVERT_ENV_KEYS = {
     'ir.model.access': 'access',
     'ir.model.constraint': 'model_constraint',
     'ir.model.data': 'model_data',
-    'ir.model.fields': 'fields',               # subscription.document.fields
+    'ir.model.fields': 'fields',                     # subscription.document.fields
     'ir.model.relation': 'model_relation',
     'ir.module.category': 'module_category',
-    'ir.module.module': 'module_module',             # base.import.module
-    'ir.module.module.dependency': 'module_module_dependency',
+    'ir.module.module': 'module',                    # base.import.module
+    'ir.module.module.dependency': 'module_dependency',
     'ir.needaction_mixin': 'needaction_mixin',
     'ir.property': 'prop',
     'ir.qweb': 'qweb',                               # ir.qweb.field.qweb
