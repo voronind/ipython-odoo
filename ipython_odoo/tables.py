@@ -79,23 +79,33 @@ PINNED_FIELD_NAMES = [
 IGNORE_FIELD_NAMES = set(LOG_ACCESS_COLUMNS)
 IGNORE_FIELD_NAMES.add('__last_update')
 
-def sort_field_names(field_names):
-    top_field_presence = OrderedDict((field_name, False) for field_name in PINNED_FIELD_NAMES)
-    bottom_field_names = []
 
-    for field_name in sorted(field_names):
-        if field_name in top_field_presence:
-            top_field_presence[field_name] = True
-        else:
-            if field_name in IGNORE_FIELD_NAMES:
-                pass
-            else:
-                bottom_field_names.append(field_name)
+def field_detailed_name(field):
+    detailed_name = field.name
 
-    top_field_names = [field_name for field_name, is_present in top_field_presence.items() if is_present]
-    top_field_names.insert(1, '__xml_id__')
+    if field.related:
+        detailed_name += u' → ' + u'.'.join(field.related)
 
-    return top_field_names + bottom_field_names
+    return detailed_name
+
+
+def get_field_names(fields):
+
+    field_names = OrderedDict()
+
+    for field_name, field in sorted(fields.items()):
+        if field_name in IGNORE_FIELD_NAMES:
+            continue
+
+        field_names[field_name] = field_detailed_name(field)
+
+    pinned_field_names = OrderedDict({'__xml_id__': '__xml_id__'})
+    pinned_field_names.update((pinned_field_name, field_names.pop(pinned_field_name))
+                              for pinned_field_name in PINNED_FIELD_NAMES)
+
+    pinned_field_names.update(field_names)
+
+    return pinned_field_names
 
 
 @magics_class
@@ -116,12 +126,12 @@ class MyMagics(Magics):
         if not isinstance(records, Model):
             return records
 
-        field_names = sort_field_names(records._fields)
+        field_names = get_field_names(records._fields)
 
         table = [[''] * (len(records) + 1) for i in range(len(field_names))]
 
-        for row_number, field_name in enumerate(field_names):
-            table[row_number][0] = field_name
+        for row_number, (field_name, field_detailed_name) in enumerate(field_names.items()):
+            table[row_number][0] = field_detailed_name
 
             for col_number, record in enumerate(records, start=1):
                 table[row_number][col_number] = prepare_value_for_table(record, field_name)
