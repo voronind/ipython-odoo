@@ -1,0 +1,119 @@
+
+sale::sale.order.line._action_procurement_create()
+
+    [create proc group]
+    create new_procs
+    new_procs.run()
+    --->
+        for proc with state not in 'running', 'done'
+        rule_exists = proc._assign()
+        --->
+            proc._find_suitable_rule()
+            --->    stock
+                rule = super()._find_suitable_rule()
+                --->    procurement
+                    <-- False
+                if not rule:
+                    parent_locations = proc._find_parent_location() --> get recursive loc.location_id
+                    rule = _search_suitable_rule(parent_locations)
+                    --->
+                        search rule for parent_locations, proc.warehouse_id and route_id ==
+                        1. proc.route_ids
+                        2. product.route_ids + product.categ_id.total_route_ids
+                        3. proc.warehouse_id.routes_id
+                        4. False
+                        <-- rule
+                <-- rule
+            <-- bool(rule)
+
+        if rule_exists:
+            res = proc._run()
+            --->    purchase
+                if proc.rule_id.action == 'buy':
+                <-  proc.make_po()
+                <-- super()._run()
+                    --->    mrp
+                        if proc.rule_id.action == 'manufacture':
+                        <-  proc.make_mo()[proc.id]
+                        <-- super()._run()
+                            --->    stock
+                                if proc.rule_id.action == 'move':
+                                    if not proc.rule_id.location_src_id:
+                                <-      False
+                                <-  stock.move.sudo().create(proc._get_stock_move_values())
+                                <-- super()._run()
+                                    --->    procurement
+                                        <-- True
+
+            if res:
+                proc.state = 'running'
+            else:
+                proc.state = 'exception'
+        else:
+            proc.state = 'exception'
+
+
+purchase::ProcurementOrder.make_po()
+
+    for proc in self
+
+    suppliers = filter proc.product_id.seller_ids by proc.company and proc.product_id
+    if not suppliers:
+        continue
+
+    supplier = procurement._make_po_select_supplier(suppliers)
+    --->    purchase
+        <-- suppliers[0]
+
+    partner = supplier.name
+    domain = proc._make_po_get_domain(partner)
+    --->
+        group = switch proc.rule_id.group_propagation_option
+        - 'fixed'       => proc.rule_id.group_id
+        - 'propagate'   => proc.group_id
+        - other         => False
+
+        <-- domain =
+            state: 'draft'
+            partner_id: supplier
+            picking_type_id: proc.rule_id.picking_type_id
+            company_id: proc.company_id
+            dest_address_id: proc.partner_dest_id
+            group_id: group if not False
+
+    po = purchase.order.search(domain)[0]
+
+    if not po:
+        vals = procurement._prepare_purchase_order(supplier)
+        po = purchase.order.create(vals)
+    elif not po.origin:
+        update po origin
+
+    try to find product in po
+    if product in po:
+        add quantity to corresponding po_line
+
+    else:
+        po_line = purchase.order.line.create(proc._prepare_purchase_order_line(po, supplier_info))
+        --->
+
+    <-- procs.ids
+
+
+mrp::ProcurementOrder.make_mo()
+
+    for proc in self
+
+    bom = proc._get_matching_bom()
+    --->
+        <-- if proc.bom_id
+        <-- mrp.bom.with_context(force_company=proc.company_id.id)._bom_find(product=proc.product_id, picking_type=proc.rule_id.picking_type_id)
+
+    if bom:
+        production = mrp.production.sudo().with_context(force_company=proc.company_id.id).create(proc._prepare_mo_vals(bom))
+        res[proc.id] = production.id
+    else:
+        res[proc.id] = False
+
+    return res
+

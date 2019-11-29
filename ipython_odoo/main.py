@@ -220,6 +220,8 @@ def search(self, ids=None, count=False, {kwargs}):
         else:
             return self.browse(ids)
             
+    domains.append(('create_date', '>', '2019-11-24 10:55:00'))
+            
     return self.search(domains, count=count)
 '''
 
