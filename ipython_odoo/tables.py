@@ -114,7 +114,10 @@ def get_field_names(fields):
 
 
 def prepare_function(func):
-    func_source = inspect.getsource(func)
+    try:
+        func_source = inspect.getsource(func)
+    except IOError as error:
+        func_source = unicode(error)
 
     # Decrease indent
     func_source_lines = [line for line in func_source.splitlines() if line.strip()]

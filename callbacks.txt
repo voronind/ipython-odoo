@@ -1,5 +1,6 @@
 
-sale::sale.order.line._action_procurement_create()
+sale.order.action_confirm()
+sale:SaleOrderLine._action_procurement_create():
 
     [create proc group]
     create new_procs
@@ -8,22 +9,16 @@ sale::sale.order.line._action_procurement_create()
         for proc with state not in 'running', 'done'
         rule_exists = proc._assign()
         --->
-            proc._find_suitable_rule()
-            --->    stock
-                rule = super()._find_suitable_rule()
-                --->    procurement
-                    <-- False
-                if not rule:
-                    parent_locations = proc._find_parent_location() --> get recursive loc.location_id
-                    rule = _search_suitable_rule(parent_locations)
-                    --->
-                        search rule for parent_locations, proc.warehouse_id and route_id ==
-                        1. proc.route_ids
-                        2. product.route_ids + product.categ_id.total_route_ids
-                        3. proc.warehouse_id.routes_id
-                        4. False
-                        <-- rule
-                <-- rule
+            if proc.rule_id:
+                return True
+
+            if proc.product_id.type in 'service', 'digital'
+                return False
+
+            rule = proc._find_suitable_rule()
+            ---> stock:ProcurementOrder._find_suitable_rule()
+                <--- rule
+
             <-- bool(rule)
 
         if rule_exists:
@@ -51,6 +46,21 @@ sale::sale.order.line._action_procurement_create()
                 proc.state = 'exception'
         else:
             proc.state = 'exception'
+
+
+stock:ProcurementOrder._find_suitable_rule()
+    rule = super procurement:ProcurementOrder._find_suitable_rule()
+    --- return False
+    if not rule:
+        parent_locations = proc._find_parent_location() --> get recursive loc.location_id
+        rule = _search_suitable_rule(parent_locations)
+        --->
+            search rule for parent_locations, proc.warehouse_id and route_id ==
+            1. proc.route_ids
+            2. product.route_ids + product.categ_id.total_route_ids
+            3. proc.warehouse_id.routes_id
+            4. False
+            <-- rule
 
 
 purchase::ProcurementOrder.make_po()

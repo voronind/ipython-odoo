@@ -1,0 +1,199 @@
+
+sale:SaleOrder.action_confirm():
+    for order in self:
+        order.state = 'sale'
+        order.confirmation_date = now()
+        order.force_quotation_send()?
+        order.order_line._action_procurement_create() --> procurement_jit -> sale
+
+    self.action_done()?
+    return True
+
+
+procurement_jit:SaleOrderLine._action_procurement_create():
+    procs = super(self) --> sale:
+    ...
+    return procs
+
+
+sale:SaleOrderLine._action_procurement_create():
+    for line in self:
+        if line.state != 'sale':
+            continue
+
+        if not line.product_id._need_procurement(): --> sale_stock
+                                if any(self) not in 'service', 'digital':
+                                    return True
+                                return super(self) --> product
+                                            return False
+            continue
+
+        proc_group = ...?
+
+        vals = line._prepare_order_line_procurement(proc_group) --> sale_stock
+                    vals = super(self) --> sale
+                                return {...}
+                    vals.update(...)
+                    return vals
+
+        ...
+        new_proc = ProcurementOrder.with_context(procurement_autorun_defer=True).create(vals) --> procurement
+                                                                                procurement = super(vals)
+                                                                                if not procurement_autorun_defer:
+                                                                                    procurement.run() --> stock -> procurement
+        new_procs += new_proc
+
+    new_procs.run() --> stock -> procurement
+    return new_procs
+
+
+stock:ProcurementOrder.run(...):
+    new_self = self with state not in 'running', 'done', 'cancel' (<=> in 'confirmed', 'exception')
+
+    if not new_self:
+        return True
+
+    res = super(new_self).run(...) --> procurement
+
+    procs = new_self with state == 'running' and rule_id.action == 'move'
+    moves = procs.move_ids with state == 'draft'
+    moves.action_confirm() --> mrp -> stock
+
+    new_procurements = self.search([('move_dest_id.procurement_id', 'in', new_self.ids)], order='id')
+    if new_procurements:
+        res = new_procurements.run(...)
+
+    return res
+
+
+procurement:ProcurementOrder.run():
+
+    for proc in self with state not in 'running', 'done' (<=> 'confirmed', 'exception', 'cancel'):
+        if proc._assign():
+                            1. proc.rule_id => True
+                            2. if proc.product_id.type not in 'service', 'digital':
+                                   rule = proc._find_suitable_rule() --> stock
+                                   if rule:
+                                       proc.rule_id = rule
+                                       => True
+                            3. => False
+
+            if proc._run(): --> purchase -> mrp -> stock
+                proc.state = 'running'
+            else:
+                proc.state = 'exception'
+
+        else:
+            proc.state = 'exception'
+
+    return True
+
+
+stock ProcurementOrder
+def _find_suitable_rule():
+
+    rule = super(self) --> procurement
+                                        return False
+
+    if not rule:
+        parent_locations = proc._find_parent_location()
+                                                    return recursive location.location_id
+
+        rule = self._search_suitable_rule(parent_locations)
+                    search rule for parent_locations, proc.warehouse_id and route_id ==
+                    1. self.route_ids
+                    2. self.product_id.route_ids + product.categ_id.total_route_ids
+                    3. self.warehouse_id.routes_id
+                    4. False
+    return rule
+
+
+purchase ProcurementOrder
+def _run(self):
+
+    if self.rule_id.action == 'buy':
+        return self.make_po() --> purchase
+
+    return super() --> mrp
+    ///////////////////////
+
+
+    <-- super()._run()
+        --->    mrp
+            if proc.rule_id.action == 'manufacture':
+            <-  proc.make_mo()[proc.id]
+            <-- super()._run()
+                --->    stock
+                    if proc.rule_id.action == 'move':
+                        if not proc.rule_id.location_src_id:
+                    <-      False
+                    <-  stock.move.sudo().create(proc._get_stock_move_values())
+                    <-- super()._run()
+                        --->    procurement
+                            <-- True
+
+
+purchase::ProcurementOrder.make_po()
+
+    for proc in self
+
+    suppliers = filter proc.product_id.seller_ids by proc.company and proc.product_id
+    if not suppliers:
+        continue
+
+    supplier = procurement._make_po_select_supplier(suppliers)
+    --->    purchase
+        <-- suppliers[0]
+
+    partner = supplier.name
+    domain = proc._make_po_get_domain(partner)
+    --->
+        group = switch proc.rule_id.group_propagation_option
+        - 'fixed'       => proc.rule_id.group_id
+        - 'propagate'   => proc.group_id
+        - other         => False
+
+        <-- domain =
+            state: 'draft'
+            partner_id: supplier
+            picking_type_id: proc.rule_id.picking_type_id
+            company_id: proc.company_id
+            dest_address_id: proc.partner_dest_id
+            group_id: group if not False
+
+    po = purchase.order.search(domain)[0]
+
+    if not po:
+        vals = procurement._prepare_purchase_order(supplier)
+        po = purchase.order.create(vals)
+    elif not po.origin:
+        update po origin
+
+    try to find product in po
+    if product in po:
+        add quantity to corresponding po_line
+
+    else:
+        po_line = purchase.order.line.create(proc._prepare_purchase_order_line(po, supplier_info))
+        --->
+
+    <-- procs.ids
+
+
+mrp::ProcurementOrder.make_mo()
+
+    for proc in self
+
+    bom = proc._get_matching_bom()
+    --->
+        <-- if proc.bom_id
+        <-- mrp.bom.with_context(force_company=proc.company_id.id)._bom_find(product=proc.product_id, picking_type=proc.rule_id.picking_type_id)
+
+    if bom:
+        production = mrp.production.sudo().with_context(force_company=proc.company_id.id).create(proc._prepare_mo_vals(bom))
+        res[proc.id] = production.id
+    else:
+        res[proc.id] = False
+
+    return res
+
