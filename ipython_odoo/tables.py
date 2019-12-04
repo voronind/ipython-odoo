@@ -153,7 +153,7 @@ def prepare_function(func):
         return u'✓'
 
 
-def get_model_attrs(records):
+def get_model_attrs(records, model_attr_name=None):
     models = [klass for klass in records.__class__.__mro__ if Model in klass.__bases__]
 
     IGNORE_ATTRS = {'_module', '__module__', '_inherit', '_order', '_name', '_description', '__doc__',
@@ -163,10 +163,13 @@ def get_model_attrs(records):
     # Headers
     attrs = [[''] + [model._module for model in models]]
 
+    # TODO show _inherits model attrs like in res.users and product.product
     names = set()
     for model in models:
-        model_attr_names = model.__dict__.keys()
-        model_attr_names.sort()
+        if model_attr_name:
+            model_attr_names = [model_attr_name]
+        else:
+            model_attr_names = sorted(model.__dict__.keys())
 
         for name in model_attr_names:
             if name in names:
@@ -260,8 +263,14 @@ class MyMagics(Magics):
 
     @line_magic
     def h(self, line):
-        records = eval(line, self.shell.user_ns)
+        if '.' in line:
+            records_var_name, model_attr_name = line.split('.')
+        else:
+            records_var_name = line
+            model_attr_name = ''
 
-        attrs = get_model_attrs(records)
+        records = eval(records_var_name, self.shell.user_ns)
+
+        attrs = get_model_attrs(records, model_attr_name)
         prepare_model_attrs(attrs)
         print_model_attrs(attrs)
