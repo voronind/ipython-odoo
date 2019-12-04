@@ -10,13 +10,16 @@ sale:SaleOrder.action_confirm():
     return True
 
 
-procurement_jit:SaleOrderLine._action_procurement_create():
+procurement_jit SaleOrderLine
+def _action_procurement_create():
     procs = super(self) --> sale:
     ...
     return procs
 
 
-sale:SaleOrderLine._action_procurement_create():
+sale SaleOrderLine
+def _action_procurement_create():
+
     for line in self:
         if line.state != 'sale':
             continue
@@ -115,85 +118,95 @@ def _run(self):
         return self.make_po() --> purchase
 
     return super() --> mrp
-    ///////////////////////
+                if proc.rule_id.action == 'manufacture':
+                    return proc.make_mo()[proc.id] --> mrp
 
+                return super(proc) --> stock
+                            if proc.rule_id.action == 'move':
+                                if not proc.rule_id.location_src_id:
+                                    return False
+                                vals = proc._get_stock_move_values() --> stock
+                                StockMove.sudo().create(vals)
+                                return True
 
-    <-- super()._run()
-        --->    mrp
-            if proc.rule_id.action == 'manufacture':
-            <-  proc.make_mo()[proc.id]
-            <-- super()._run()
-                --->    stock
-                    if proc.rule_id.action == 'move':
-                        if not proc.rule_id.location_src_id:
-                    <-      False
-                    <-  stock.move.sudo().create(proc._get_stock_move_values())
-                    <-- super()._run()
-                        --->    procurement
-                            <-- True
+                            return super(proc) --> procurement
+                                        return True
 
+purchase ProcurementOrder
+def make_po():
 
-purchase::ProcurementOrder.make_po()
+    for proc in self:
 
-    for proc in self
+        supplier_infos = proc.product_id.seller_ids with (
+            si.company_id in False,proc.company_id and si.product_id in False,proc.product_id)
 
-    suppliers = filter proc.product_id.seller_ids by proc.company and proc.product_id
-    if not suppliers:
-        continue
+        if not supplier_infos:
+            continue
 
-    supplier = procurement._make_po_select_supplier(suppliers)
-    --->    purchase
-        <-- suppliers[0]
+        supplier_info = procurement._make_po_select_supplier(supplier_infos)
+                                       return supplier_infos[0]
+        supplier = supplier_info.name
 
-    partner = supplier.name
-    domain = proc._make_po_get_domain(partner)
-    --->
-        group = switch proc.rule_id.group_propagation_option
-        - 'fixed'       => proc.rule_id.group_id
-        - 'propagate'   => proc.group_id
-        - other         => False
+        domain = proc._make_po_get_domain(self, partner)
+                        gpo = self.rule_id.group_propagation_option
+                        group =
+                        1. gpo == 'fixed' => self.rule_id.group_id
+                        2. gpo == 'propagate' => self.group_id
+                        3. => False
 
-        <-- domain =
-            state: 'draft'
-            partner_id: supplier
-            picking_type_id: proc.rule_id.picking_type_id
-            company_id: proc.company_id
-            dest_address_id: proc.partner_dest_id
-            group_id: group if not False
+                        return
+                            state: 'draft'
+                            partner_id: partner
+                            picking_type_id: self.rule_id.picking_type_id
+                            company_id: self.company_id
+                            dest_address_id: proc.partner_dest_id
+                            group_id: group?
 
-    po = purchase.order.search(domain)[0]
+        @ get/cache by domain
+        po = PurchaseOrder.search(domain)[0]
 
-    if not po:
-        vals = procurement._prepare_purchase_order(supplier)
-        po = purchase.order.create(vals)
-    elif not po.origin:
-        update po origin
+        if not po:
+            vals = proc._prepare_purchase_order(supplier)
+            @ cache by domain
+            po = PurchaseOrder.create(vals)
 
-    try to find product in po
-    if product in po:
-        add quantity to corresponding po_line
+        elif not po.origin or proc.origin not in po.origin:
+            update po.origin
+            ...
 
-    else:
-        po_line = purchase.order.line.create(proc._prepare_purchase_order_line(po, supplier_info))
-        --->
+        if po:
+            res += [proc.id]
 
-    <-- procs.ids
+        # Create Line
+        po_line = False
 
+        for line in po.order_line:
+            if line.product_id == proc.product_id and line.product_uom == proc.product_id.uom_po_id:
+                ...!
+                po_line = line.write(...)
+                break
 
-mrp::ProcurementOrder.make_mo()
-
-    for proc in self
-
-    bom = proc._get_matching_bom()
-    --->
-        <-- if proc.bom_id
-        <-- mrp.bom.with_context(force_company=proc.company_id.id)._bom_find(product=proc.product_id, picking_type=proc.rule_id.picking_type_id)
-
-    if bom:
-        production = mrp.production.sudo().with_context(force_company=proc.company_id.id).create(proc._prepare_mo_vals(bom))
-        res[proc.id] = production.id
-    else:
-        res[proc.id] = False
+        if not po_line:
+            vals = proc._prepare_purchase_order_line(po, supplier_info)
+            PurchaseOrderLine.create(vals)
 
     return res
 
+
+mrp ProcurementOrder
+def make_mo()
+
+    for proc in self:
+
+        bom = proc._get_matching_bom()
+                    if self.bom_id
+                        return self.bom_id
+                    return Bom.with_context(force_company=self.company_id)._bom_find(product=proc.product_id, picking_type=proc.rule_id.picking_type_id)
+
+        if bom:
+            production = Production.sudo().with_context(force_company=proc.company_id).create(proc._prepare_mo_vals(bom))
+            res[proc.id] = production.id
+        else:
+            res[proc.id] = False
+
+    return res
