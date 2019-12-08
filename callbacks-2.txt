@@ -1,5 +1,6 @@
 
-sale:SaleOrder.action_confirm():
+sale SaleOrder
+def action_confirm():
     for order in self:
         order.state = 'sale'
         order.confirmation_date = now()
@@ -33,10 +34,25 @@ def _action_procurement_create():
 
         proc_group = ...?
 
-        vals = line._prepare_order_line_procurement(proc_group) --> sale_stock
+        vals = line._prepare_order_line_procurement(proc_group=False) --> sale_stock
                     vals = super(self) --> sale
-                                return {...}
-                    vals.update(...)
+                                return {
+                                    name: self.name,
+                                    origin: self.order_id.name,
+                                    date_planned: ...,
+                                    product_id: self.product_id,
+                                    product_qty: self.product_uom_qty,
+                                    product_uom: self.product_uom.id,
+                                    company_id: self.order_id.company_id,
+                                    group_id: proc_group,
+                                    sale_line_id: self.id,}
+                    vals.update({
+                        date_planned: ...,
+                        location_id: self.order_id.partner_shipping_id.property_stock_customer,
+                        route_ids: self.route_id and [(4, self.route_id.id)] or [],
+                        warehouse_id: self.order_id.warehouse_id and self.order_id.warehouse_id.id or False,
+                        partner_dest_id: self.order_id.partner_shipping_id.id,
+                        sale_line_id: self.id,}
                     return vals
 
         ...
@@ -50,7 +66,8 @@ def _action_procurement_create():
     return new_procs
 
 
-stock:ProcurementOrder.run(...):
+stock ProcurementOrder
+def run(...):
     new_self = self with state not in 'running', 'done', 'cancel' (<=> in 'confirmed', 'exception')
 
     if not new_self:
@@ -69,7 +86,8 @@ stock:ProcurementOrder.run(...):
     return res
 
 
-procurement:ProcurementOrder.run():
+procurement ProcurementOrder
+def run():
 
     for proc in self with state not in 'running', 'done' (<=> 'confirmed', 'exception', 'cancel'):
         if proc._assign():
