@@ -508,9 +508,9 @@ CONVERT_ENV_KEYS = {
     'restaurant.table': 'table',
 
     # procurement
-    'procurement.group': 'group',                    # account.tax.group, res.country.group
-    'procurement.order': 'procurement_order',
-    'procurement.order.compute.all': 'order_compute_all',
+    'procurement.group': 'procurement_group',        # account.tax.group, res.country.group
+    'procurement.order': 'procurement',
+    # 'procurement.order.compute.all': 'order_compute_all',
     'procurement.rule': 'procurement_rule',
 
     # product
@@ -589,7 +589,7 @@ CONVERT_ENV_KEYS = {
     'sale.config.settings': 'sale_config_settings',
 
     # stock
-    'make.procurement': 'procurement',
+    'make.procurement': 'make_procurement',
     'procurement.orderpoint.compute': 'orderpoint_compute',
     'product.putaway': 'putaway',
     'product.removal': 'removal',
