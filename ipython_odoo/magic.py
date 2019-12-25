@@ -1,6 +1,8 @@
+import sys
+
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 
-from .tracer import patch_model_methods
+from .tracer import tracing
 from .hierarchy import get_model_attrs, prepare_model_attrs, print_model_attrs
 from .tables import print_recorset
 
@@ -29,6 +31,5 @@ class MyMagics(Magics):
 
     @line_magic
     def trace(self, line):
-        env = self.shell.user_ns['env']
-
-        patch_model_methods(env)
+        with tracing():
+            return eval(line, self.shell.user_ns)

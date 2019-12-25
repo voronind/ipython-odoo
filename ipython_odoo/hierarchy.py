@@ -51,12 +51,18 @@ def prepare_function(func):
         return u'✓'
 
 
+def recordset_models(recordset):
+    from odoo.models import Model
+
+    return [klass for klass in recordset.__class__.__mro__ if Model in klass.__bases__]
+
+
 def get_model_attrs(records, model_attr_name=None):
-    models = [klass for klass in records.__class__.__mro__ if Model in klass.__bases__]
+    models = recordset_models(records)
+    models.reverse()
 
     IGNORE_ATTRS = {'_module', '__module__', '_inherit', '_order', '_name', '_description', '__doc__',
                     '_local_constraints', '_local_sql_constraints',}
-    models.reverse()
 
     # Headers
     attrs = [[''] + [model._module for model in models]]
