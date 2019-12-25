@@ -6,8 +6,6 @@ import os
 import time
 from collections import OrderedDict
 
-from odoo import models
-
 from .model_names import CONVERT_ENV_KEYS
 # http://localhost:63342/api/file//home/voronin/projects/sintez_addons/sintez_base/__manifest__.py:1
 
@@ -220,7 +218,7 @@ def search(self, ids=None, count=False, {kwargs}):
         else:
             return self.browse(ids)
             
-    domains.append(('create_date', '>', '2019-11-24 10:55:00'))
+    # domains.append(('create_date', '>', '2019-11-24 10:55:00'))
             
     return self.search(domains, count=count)
 '''
@@ -504,7 +502,7 @@ def init_odoo():
     # Environment.manage().__exit__():
 
 
-from .tables import MyMagics
+from .magic import MyMagics
 
 
 def load_ipython_extension(ipython):
