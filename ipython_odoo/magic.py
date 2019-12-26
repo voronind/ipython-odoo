@@ -2,7 +2,7 @@ import sys
 
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 
-from .tracer import tracing
+from .tracer import Tracer
 from .hierarchy import get_model_attrs, prepare_model_attrs, print_model_attrs
 from .tables import print_recorset
 
@@ -31,5 +31,5 @@ class MyMagics(Magics):
 
     @line_magic
     def trace(self, line):
-        with tracing():
+        with Tracer():
             return eval(line, self.shell.user_ns)

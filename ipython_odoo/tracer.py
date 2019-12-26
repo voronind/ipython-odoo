@@ -50,29 +50,165 @@ def patch_model_methods(env):
 all_method_names = reduce(set.union, INTEREST_METHODS.values())
 
 
+def get_Model_methods():
+    instancemethod = type(BaseModel.create)
+
+    method_names = set()
+
+    for attr_name in dir(BaseModel):
+        if isinstance(getattr(BaseModel, attr_name), (instancemethod, property)):
+            method_names.add(attr_name)
+
+    return method_names
+
+
+def get_skip_method_names():
+    method_names = get_Model_methods()
+    # method_names.add('<lambda>')
+
+    method_names |= {
+        '<lambda>',
+        '_cache',
+        'ids',
+
+        # mail
+        'message_get_reply_to',
+        'message_post',
+        '_get_tracked_fields',
+        'message_track',
+        '_message_track',
+        '_track_subtype',
+        '_message_track_post_template',
+        '_message_get_auto_subscribe_fields',
+        'message_auto_subscribe',
+        '_message_post_process_attachments',
+        '_track_template',
+        '_message_track_get_changes',
+        'message_post_with_view',
+        'message_post_with_template',
+
+        # sale
+        'compute_actual_finish_date',
+        'check_done',
+
+        # HZ
+        'loop',
+        'aggregate',
+    }
+    return method_names
+
+
+skip_methods = get_skip_method_names()
+
+
 def get_self(frame):
-    if frame.f_code.co_name in all_method_names:
-        args_info = inspect.getargvalues(frame)
-        self = args_info.locals.get('self')
-        if isinstance(self, BaseModel):
-            return self
+    # if frame.f_code.co_name in all_method_names:
 
-def trace(frame, event, arg):
+    func_name = frame.f_code.co_name
 
-    if event == 'call':
-        self = get_self(frame)
-        if self is not None:
-            print self, frame.f_code.co_name
-            return trace
+    if func_name.startswith('__') and func_name.endswith('__'):
+        return None, None
 
-    elif event == 'return':
-        self = get_self(frame)
-        if self is not None:
-            print self, frame.f_code.co_name, 'returns', arg
+    if func_name in skip_methods:
+        return None, None
+
+    if func_name.startswith('_compute_'):
+        return None, None
+
+    if func_name not in {
+            'search',
+            }:
+
+        try:
+            args_info = inspect.getargvalues(frame)
+        except IndexError:
+            print 'IndexError'
+            return None, None
+
+        self = 'self' in args_info[0] and args_info.locals.get('self')
+        if isinstance(self, BaseModel) \
+            and self._original_module not in {
+                'base',
+                'mail',
+                'decimal_precision',
+                'bus',
+
+                'account',
+                }:
+            try:
+                if args_info[0] and args_info[0][0] == 'self':
+                    args_info[0].pop(0)
+
+                args = inspect.formatargvalues(*args_info)
+            except KeyError:
+                # import ipdb; ipdb.set_trace()
+                print frame.f_code.co_name
+                print args_info
+                raise KeyError
+
+            return self, args
+    return None, None
 
 
-@contextmanager
-def tracing():
-    sys.settrace(trace)
-    yield
-    sys.settrace(None)
+class Tracer(object):
+    def __init__(self):
+        self.level = None
+
+    def __enter__(self):
+        sys.settrace(self.trace)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.settrace(None)
+
+    def print_indent(self, line, newline=False):
+        indent = '    ' * self.level
+        if newline:
+            print
+        print u'{}{}'.format(indent, line)
+
+    def print_return_indent(self, line):
+        indent = '    ' * (self.level + 1)
+        print u'{}{}'.format(indent, line)
+
+    def print_return(self, arg):
+        if isinstance(arg, dict):
+            self.print_return_indent(u'return {')
+            for key, value in sorted(arg.items()):
+                self.print_return_indent(u'        {!r}: {}'.format(key, value))
+            self.print_return_indent(u'       }')
+        else:
+            self.print_return_indent(u'{} {}'.format('return', arg))
+
+    def trace(self, frame, event, arg):
+
+        if event == 'call':
+            rs, args = get_self(frame)
+            if rs is not None:
+                if self.level is None:
+                    self.level = 0
+                else:
+                    self.level += 1
+
+                file_name = inspect.getsourcefile(frame.f_code)
+                for prefix in [
+                    '/home/dimka/.local/share/virtualenvs/sintez_addons-BuwxGdRL/lib/python2.7/site-packages/odoo/addons/',
+                    '/home/dimka/work/sintez_addons/custom_addons/',
+                    '/home/dimka/work/sintez_addons/addons/',
+                    ]:
+                    if file_name.startswith(prefix):
+                        file_name = file_name[len(prefix):]
+                        break
+
+                self.print_indent(u'# {}:{}'.format(file_name, frame.f_lineno), newline=True)
+                self.print_indent(u'{}.{}{}'.format(rs, frame.f_code.co_name, args))
+
+                return self.trace
+
+        elif event == 'return':
+            rs, args = get_self(frame)
+            if rs is not None:
+                self.print_return(arg)
+
+                if self.level:
+                    self.level -= 1
