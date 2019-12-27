@@ -115,38 +115,39 @@ def get_self(frame):
     if func_name.startswith('_compute_'):
         return None, None
 
-    if func_name not in {
+    if func_name in {
             'search',
             }:
+        return None, None
 
+    try:
+        args_info = inspect.getargvalues(frame)
+    except IndexError:
+        print 'IndexError'
+        return None, None
+
+    self = 'self' in args_info[0] and args_info.locals.get('self')
+    if isinstance(self, BaseModel) \
+        and self._original_module not in {
+            'base',
+            'mail',
+            'decimal_precision',
+            'bus',
+
+            'account',
+            }:
         try:
-            args_info = inspect.getargvalues(frame)
-        except IndexError:
-            print 'IndexError'
-            return None, None
+            if args_info[0] and args_info[0][0] == 'self':
+                args_info[0].pop(0)
 
-        self = 'self' in args_info[0] and args_info.locals.get('self')
-        if isinstance(self, BaseModel) \
-            and self._original_module not in {
-                'base',
-                'mail',
-                'decimal_precision',
-                'bus',
+            args = inspect.formatargvalues(*args_info)
+        except KeyError:
+            # import ipdb; ipdb.set_trace()
+            print frame.f_code.co_name
+            print args_info
+            raise KeyError
 
-                'account',
-                }:
-            try:
-                if args_info[0] and args_info[0][0] == 'self':
-                    args_info[0].pop(0)
-
-                args = inspect.formatargvalues(*args_info)
-            except KeyError:
-                # import ipdb; ipdb.set_trace()
-                print frame.f_code.co_name
-                print args_info
-                raise KeyError
-
-            return self, args
+        return self, args
     return None, None
 
 
