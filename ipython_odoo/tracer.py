@@ -64,7 +64,11 @@ def get_Model_methods():
 
 def get_skip_method_names():
     method_names = get_Model_methods()
-    # method_names.add('<lambda>')
+
+    method_names -= {
+        'create',
+        'search',
+    }
 
     method_names |= {
         '<lambda>',
@@ -100,10 +104,7 @@ def get_skip_method_names():
 
 skip_methods = get_skip_method_names()
 
-
 def get_self(frame):
-    # if frame.f_code.co_name in all_method_names:
-
     func_name = frame.f_code.co_name
 
     if func_name.startswith('__') and func_name.endswith('__'):
@@ -115,39 +116,38 @@ def get_self(frame):
     if func_name.startswith('_compute_'):
         return None, None
 
-    if func_name not in {
-            'search',
+    try:
+        args_info = inspect.getargvalues(frame)
+    except IndexError:
+        # print 'IndexError'
+        return None, None
+
+    self = 'self' in args_info[0] and args_info.locals.get('self')
+
+    if not isinstance(self, BaseModel):
+        return None, None
+
+    if self._original_module in {
+            'base',
+            'mail',
+            'decimal_precision',
+            'bus',
+
+            'account',
             }:
+        return None, None
 
-        try:
-            args_info = inspect.getargvalues(frame)
-        except IndexError:
-            print 'IndexError'
-            return None, None
+    try:
+        if args_info[0] and args_info[0][0] == 'self':
+            args_info[0].pop(0)
 
-        self = 'self' in args_info[0] and args_info.locals.get('self')
-        if isinstance(self, BaseModel) \
-            and self._original_module not in {
-                'base',
-                'mail',
-                'decimal_precision',
-                'bus',
+        args = inspect.formatargvalues(*args_info)
+    except KeyError:
+        print frame.f_code.co_name
+        print args_info
+        raise KeyError
 
-                'account',
-                }:
-            try:
-                if args_info[0] and args_info[0][0] == 'self':
-                    args_info[0].pop(0)
-
-                args = inspect.formatargvalues(*args_info)
-            except KeyError:
-                # import ipdb; ipdb.set_trace()
-                print frame.f_code.co_name
-                print args_info
-                raise KeyError
-
-            return self, args
-    return None, None
+    return self, args
 
 
 class Tracer(object):
