@@ -104,6 +104,17 @@ def get_field_names(fields):
     return pinned_field_names
 
 
+def different_row_values(table):
+    new_table = []
+    for row in table:
+        # print set(row[1:])
+        if len(set(row[1:])) > 1:
+            new_table.append(row)
+
+    # print new_table
+    return new_table
+
+
 def print_recorset(line, user_ns):
     # import ipdb
     # ipdb.set_trace()
@@ -126,6 +137,7 @@ def print_recorset(line, user_ns):
         for col_number, record in enumerate(records, start=1):
             table[row_number][col_number] = prepare_value_for_table(record, field_name)
 
+    # table = different_row_values(table)
     pad_table(table)
     print_table(table)
 
