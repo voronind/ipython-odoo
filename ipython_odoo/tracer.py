@@ -1,5 +1,6 @@
 import inspect
 import logging
+import re
 import sys
 from contextlib import contextmanager
 from functools import wraps
@@ -190,17 +191,13 @@ class Tracer(object):
                 else:
                     self.level += 1
 
-                file_name = inspect.getsourcefile(frame.f_code)
-                for prefix in [
-                    '/home/dimka/.local/share/virtualenvs/sintez_addons-BuwxGdRL/lib/python2.7/site-packages/odoo/addons/',
-                    '/home/dimka/work/sintez_addons/custom_addons/',
-                    '/home/dimka/work/sintez_addons/addons/',
-                    ]:
-                    if file_name.startswith(prefix):
-                        file_name = file_name[len(prefix):]
-                        break
+                file_path = inspect.getsourcefile(frame.f_code)
 
-                self.print_indent(u'# {}:{}'.format(file_name, frame.f_lineno), newline=True)
+                match = re.match('.+/(?:addons|custom_addons)/(.+)', file_path)
+                if match:
+                    addon_model_path = match.groups()[0]
+                    self.print_indent(u'# {}:{}'.format(addon_model_path, frame.f_lineno), newline=True)
+
                 self.print_indent(u'{}.{}{}'.format(rs, frame.f_code.co_name, args))
 
                 return self.trace
