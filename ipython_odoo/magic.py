@@ -16,6 +16,11 @@ class MyMagics(Magics):
         print_recorset(line, self.shell.user_ns)
 
     @line_magic
+    def d(self, line):
+        """records_table"""
+        print_recorset(line, self.shell.user_ns, diff=True)
+
+    @line_magic
     def h(self, line):
         if '.' in line:
             records_var_name, model_attr_name = line.split('.')
