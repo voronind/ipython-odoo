@@ -604,8 +604,8 @@ CONVERT_ENV_KEYS = {
     'stock.inventory': 'inventory',
     'stock.inventory.line': 'inventory_line',
     'stock.location': 'location',                    # event.track.location
-    'stock.location.path': 'location_path',
-    'stock.location.route': 'location_route',
+    'stock.location.path': 'path',
+    'stock.location.route': 'route',
     'stock.move': 'stock_move',                      # account.move, validate.account.move
     'stock.move.operation.link': 'move_operation_link',  # res.request.link
     'stock.pack.operation': 'pack_operation',
