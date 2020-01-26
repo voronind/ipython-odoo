@@ -453,6 +453,7 @@ def init_odoo():
 
     env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
     user_ns = {
+        'odoo': odoo,
         'env': env,
         'cr': env.cr,
         'commit': env.cr.commit,

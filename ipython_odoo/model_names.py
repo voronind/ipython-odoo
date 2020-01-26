@@ -377,9 +377,9 @@ CONVERT_ENV_KEYS = {
     # lunch
     'lunch.alert': 'alert',
     'lunch.cashmove': 'cashmove',
-    'lunch.order': 'lunch_order',
-    'lunch.order.line': 'lunch_order_line',
-    'lunch.order.line.lucky': 'order_line_lucky',
+    'lunch.order': 'lunch',
+    'lunch.order.line': 'lunch_line',
+    'lunch.order.line.lucky': 'lunch_line_lucky',
     'lunch.product': 'lunch_product',                # product.product
     'lunch.product.category': 'lunch_product_category',
 
@@ -548,8 +548,8 @@ CONVERT_ENV_KEYS = {
 
     # purchase
     'purchase.config.settings': 'purchase_config_settings',
-    'purchase.order': 'purchase_order',
-    'purchase.order.line': 'purchase_order_line',
+    'purchase.order': 'purchase',
+    'purchase.order.line': 'purchase_line',
     'purchase.report': 'purchase_report',
 
     # purchase_requisition
@@ -580,8 +580,8 @@ CONVERT_ENV_KEYS = {
     # sale
     'sale.advance.payment.inv': 'advance_payment_inv',
     'sale.layout_category': 'layout_category',
-    'sale.order': 'sale_order',
-    'sale.order.line': 'sale_order_line',
+    'sale.order': 'sale',
+    'sale.order.line': 'sale_line',
     'sale.report': 'sale_report',
 
     # sales_team
