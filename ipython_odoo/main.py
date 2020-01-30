@@ -164,7 +164,7 @@ suffix_choser = {
 
     'char': CHAR_SUFFIXES,
     # TODO: Select can be integer
-    'select': CHAR_SUFFIXES,
+    'selection': CHAR_SUFFIXES,
 
     'many2one': RELATION_SUFFIXES,
     'one2many': RELATION_SUFFIXES,
