@@ -43,7 +43,7 @@ def by_company(company, product):
     return search_suitable_rule(product, location=location, warehouse=warehouse)
 
 
-def search_suitable_rule(product, location=None, warehouse=None):
+def search_suitable_rule(product=None, location=None, warehouse=None):
     from collections import OrderedDict
 
     expression = odoo.osv.expression
@@ -59,13 +59,65 @@ def search_suitable_rule(product, location=None, warehouse=None):
 
     Pull = env['procurement.rule']
 
-    product_routes = product.route_ids | product.categ_id.total_route_ids
-    if product_routes:
-        result['Product'] = product_res = OrderedDict()
-        for route in product_routes.sorted('sequence'):
-            product_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
-            if product_rules:
-                product_res[route] = product_rules
+    if product:
+        product_routes = product.route_ids | product.categ_id.total_route_ids
+        if product_routes:
+            result['Product'] = product_res = OrderedDict()
+            for route in product_routes.sorted('sequence'):
+                product_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
+                if product_rules:
+                    product_res[route] = product_rules
+
+    warehouse_routes = warehouse.route_ids
+    if warehouse_routes:
+        result['Warehouse'] = warehouse_res = OrderedDict()
+        for route in warehouse_routes.sorted('sequence'):
+            warehouse_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
+            if warehouse_rules:
+                warehouse_res[route] = warehouse_rules
+
+    global_rules = Pull.search(expression.AND([[('route_id', '=', False)], domain]), order='sequence')
+    if global_rules:
+        result['Global'] = global_rules
+
+    return result
+
+
+def warehouse_rules(warehouse_or_company):
+    from collections import OrderedDict
+    from odoo.osv import expression
+
+    result = OrderedDict()
+
+    if warehouse_or_company._name == 'stock.warehouse':
+        warehouse_id = warehouse_or_company.id
+    elif warehouse_or_company._name == 'res.company':
+        warehouse_id = env['res.company'].search([('company_id', '=', warehouse_or_company.id)], limit=1).id
+    else:
+        raise TypeError('Arg must be Warehouse or Company')
+
+
+    warehouse_id =
+    rules = env['procurement.rules'].search([('warehouse_id', '=', )])
+
+    location = location or env['stock.location']
+    warehouse = warehouse or env['stock.warehouse']
+
+    domain = [('location_id', 'in', parent_locations(location).ids)]
+
+    if warehouse:
+        domain = expression.AND([['|', ('warehouse_id', '=', warehouse.id), ('warehouse_id', '=', False)], domain])
+
+    Pull = env['procurement.rule']
+
+    if product:
+        product_routes = product.route_ids | product.categ_id.total_route_ids
+        if product_routes:
+            result['Product'] = product_res = OrderedDict()
+            for route in product_routes.sorted('sequence'):
+                product_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
+                if product_rules:
+                    product_res[route] = product_rules
 
     warehouse_routes = warehouse.route_ids
     if warehouse_routes:
