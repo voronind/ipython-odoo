@@ -28,17 +28,6 @@ def _search_suitable_rule(self, domain):
     return res
 
 
-@api.multi
-@api.returns('procurement.rule', lambda value: value.id if value else False)
-def _find_suitable_rule(self):
-    rule = super(ProcurementOrder, self)._find_suitable_rule()
-    if not rule:
-        # a rule defined on 'Stock' is suitable for a procurement in 'Stock\Bin A'
-        all_parent_location_ids = self._find_parent_locations()
-        rule = self._search_suitable_rule([('location_id', 'in', all_parent_location_ids.ids)])
-    return rule
-
-
 def parent_locations(location):
     result = location.browse()
     while location:
@@ -47,39 +36,47 @@ def parent_locations(location):
     return result
 
 
-def on_warehouse():
-    location = warehouse.lot_stock_id
-    return location
+def by_company(company, product):
+    warehouse = env['stock.warehouse'].search([('company_id', '=', company.id)], limit=1)
+    # location = warehouse.lot_stock_id
+    location = env.ref('stock.stock_location_customers')
+    return search_suitable_rule(product, location=location, warehouse=warehouse)
 
 
-def search_suitable_rule(env, product, location=None, warehouse=None):
+def search_suitable_rule(product, location=None, warehouse=None):
+    from collections import OrderedDict
 
     expression = odoo.osv.expression
     result = OrderedDict()
 
     location = location or env['stock.location']
+    warehouse = warehouse or env['stock.warehouse']
 
     domain = [('location_id', 'in', parent_locations(location).ids)]
 
     if warehouse:
         domain = expression.AND([['|', ('warehouse_id', '=', warehouse.id), ('warehouse_id', '=', False)], domain])
 
-    Pull = self.env['procurement.rule']
-    # res = self.env['procurement.rule']
+    Pull = env['procurement.rule']
 
     product_routes = product.route_ids | product.categ_id.total_route_ids
     if product_routes:
         result['Product'] = product_res = OrderedDict()
-        for route in product_routes.sorted(''):
-            product_res[]
-        res = Pull.search(expression.AND([[('route_id', 'in', product_routes.ids)], domain]), order='route_sequence, sequence', limit=1)
+        for route in product_routes.sorted('sequence'):
+            product_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
+            if product_rules:
+                product_res[route] = product_rules
 
+    warehouse_routes = warehouse.route_ids
+    if warehouse_routes:
+        result['Warehouse'] = warehouse_res = OrderedDict()
+        for route in warehouse_routes.sorted('sequence'):
+            warehouse_rules = Pull.search(expression.AND([[('route_id', 'in', route.ids)], domain]), order='route_sequence, sequence')
+            if warehouse_rules:
+                warehouse_res[route] = warehouse_rules
 
+    global_rules = Pull.search(expression.AND([[('route_id', '=', False)], domain]), order='sequence')
+    if global_rules:
+        result['Global'] = global_rules
 
-    if not res:
-        warehouse_routes = warehouse.route_ids
-        if warehouse_routes:
-            res = Pull.search(expression.AND([[('route_id', 'in', warehouse_routes.ids)], domain]), order='route_sequence, sequence', limit=1)
-    if not res:
-        res = Pull.search(expression.AND([[('route_id', '=', False)], domain]), order='sequence', limit=1)
-    return res
+    return result
