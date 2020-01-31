@@ -87,6 +87,7 @@ def get_model_attrs(records, model_attr_name=None):
 
     return attrs
 
+
 def prepare_model_attrs(attrs):
 
     row_count = len(attrs)

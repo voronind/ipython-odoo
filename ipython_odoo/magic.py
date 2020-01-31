@@ -5,6 +5,7 @@ from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, lin
 from .tracer import Tracer
 from .hierarchy import get_model_attrs, prepare_model_attrs, print_model_attrs
 from .tables import print_recorset
+from .procurmenet_rules import print_warehouse_rules
 
 
 @magics_class
@@ -38,3 +39,7 @@ class MyMagics(Magics):
     def trace(self, line):
         with Tracer():
             return eval(line, self.shell.user_ns)
+
+    @line_magic
+    def rules(self, line):
+        print_warehouse_rules(line, self.shell.user_ns)

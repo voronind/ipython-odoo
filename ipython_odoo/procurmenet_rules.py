@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 
 def _search_suitable_rule(self, domain):
@@ -116,35 +116,46 @@ def warehouse_rules(warehouse):
 
     result = OrderedDict()
 
-    if isinstance(warehouse, int):
-        warehouse = env['stock.warehouse'].browse(warehouse)
+    env = warehouse.env
 
-    elif warehouse._name == 'res.company':
+    # if isinstance(warehouse, int):
+    #     warehouse = env['stock.warehouse'].browse(warehouse)
+
+    if warehouse._name == 'res.company':
         warehouse = env['res.company'].search([('company_id', '=', warehouse.id)], limit=1)
 
     assert warehouse._name == 'stock.warehouse'
 
-    rules = env['procurement.rule'].search([
-        ('warehouse_id', '=', warehouse.id),
-    ])
+    rules = env['procurement.rule'].search([('warehouse_id', '=', warehouse.id)])
+    
+    rules_dict = defaultdict(defaultdict())
+
+    locations = rules.mapped('location_id')
+    routes = rules.mapped('route_id')
+
+    for route in routes:
+        row = []
+        result[route] = row
+        for location in locations:
+            ru = rules.filtered(lambda r: r.location_id == location)
+            row.append(ru)
 
     for rule in rules.sorted(lambda r: (r.location_id.id, r.route_sequence if r.route_sequence else 999, r.sequence)):
-        location = u'{}'.format(rule.location_id.name)
-        route = route_name(rule.route_id)
-        rule_str = u'{: 2d}. {} ({})'.format(rule.sequence, rule.name, rule.id)
+        result[()]
 
-        if location not in result:
-            result[location] = OrderedDict()
+        if rule.location_id not in result:
+            result[rule.location_id] = OrderedDict()
 
-        if route not in result[location]:
-            result[location][route] = []
+        if rule.route_id not in result[rule.location_id]:
+            result[rule.location_id][rule.route_id] = env['procurement.rule']
 
-        result[location][route].append(rule_str)
+        result[rule.location_id][rule.route_id] |= rule
 
     return result
 
 
-def prules(warehouse):
+def print_warehouse_rules(line, user_ns):
+    warehouse = eval(line, user_ns)
     result = warehouse_rules(warehouse)
 
     for location, routes in result.items():
@@ -155,3 +166,26 @@ def prules(warehouse):
                 print ' ' * 8, rule
             print
         print
+
+
+def get_locations(result):
+    locations = []
+    for route, locations in result.items()
+
+def print_warehouse_rules_table(line, user_ns):
+    warehouse = eval(line, user_ns)
+    result = warehouse_rules(warehouse)
+
+    rule_str = u'{: 2d}. {} ({})'.format(rule.sequence, rule.name, rule.id)
+
+    locations = []
+
+
+    table = []
+    table.append([''] + [format_location(location) for location in result.keys()])
+    for route, locations in result.items():
+        row = [format_route(route)]
+        table.append(row)
+        for location, rules in route.items():
+            row.append(format_rules(rules))
+
