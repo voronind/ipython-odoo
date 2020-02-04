@@ -1,3 +1,5 @@
+# coding=utf8
+
 from collections import OrderedDict, defaultdict
 from texttable import Texttable
 
@@ -85,7 +87,10 @@ def search_suitable_rule(product=None, location=None, warehouse=None):
 
 
 #######################
-def selectable_OFF(route):
+def selectable(route):
+    if not route:
+        return ''
+
     result = []
 
     if route.sale_selectable:
@@ -100,36 +105,14 @@ def selectable_OFF(route):
     if route.warehouse_selectable:
         result.append('warehouse')
 
-    return u','.join(result)
-
-
-def selectable(route):
-    if not route:
-        return ''
-
-    result = []
-
-    if route.sale_selectable:
-        result.append('sale')
-
-    if route.product_selectable:
-        result.append('prod')
-
-    if route.product_categ_selectable:
-        result.append('cat')
-
-    if route.warehouse_selectable:
-        result.append('wh')
-
-    # return u','.join(result)
     return u' '.join(result)
 
 
 def procure_method(rule):
     if rule.procure_method == 'make_to_order':
-        return 'mto'
+        return 'order'
     elif rule.procure_method == 'make_to_stock':
-        return 'mts'
+        return 'stock'
 
 
 def route_name(route):
@@ -218,19 +201,31 @@ def format_location(location):
     return format_record(location)
 
 
-def format_route(route):
-    string = (format_sequence_record(route)
-              + u'\n    {}'.format(selectable(route)))
+def format_route(route, warehouse):
+    string = format_sequence_record(route)
 
-    if route.warehouse_ids:
-        string += u'\n    {wh}'.format(wh=route.warehouse_ids)
+    route_warehouses = route.warehouse_ids
+    if warehouse in route_warehouses:
+        route_warehouses -= warehouse
+        string += u' ✓'
+
+    if route.company_id:
+        string += u'\n    {}'.format(format_record(route.company_id))
+
+    string += u'\n    {}'.format(selectable(route))
+
+    for warehouse in route_warehouses:
+        string += u'\n    {}'.format(format_record(warehouse))
 
     return string
 
 
 def format_rule(rule):
     string = (format_sequence_record(rule)
-              + u'\n    {} ({})'.format(rule.action, procure_method(rule)))
+              + u'\n    {} {}'.format(rule.action, procure_method(rule)))
+
+    if rule.mto_rule_id or rule.mts_rule_id:
+        string += u'\n    mto -> {}, mts -> {}'.format(rule.mto_rule_id.id, rule.mts_rule_id.id)
 
     if rule.location_src_id:
         string += u'\n    {} ->'.format(format_record(rule.location_src_id))
@@ -248,7 +243,7 @@ def print_warehouse_rules_table(line, user_ns):
     attrs.append([''] + [format_location(location) for location in locations])
 
     for route, locations in result.items():
-        row = [format_route(route)]
+        row = [format_route(route, warehouse)]
         attrs.append(row)
         for location, rules in locations.items():
             row.append(u'\n\n'.join(map(format_rule, rules)))
