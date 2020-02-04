@@ -237,6 +237,9 @@ def print_warehouse_rules_table(line, user_ns):
     warehouse = eval(line, user_ns)
     result = warehouse_rules(warehouse)
 
+    if not result:
+        return
+
     locations = result.values()[0].keys()
 
     attrs = []
