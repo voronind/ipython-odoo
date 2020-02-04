@@ -1,6 +1,9 @@
 from setuptools import setup
 
-setup(install_requires=[
-    'redbaron',
-    'texttable',
-])
+setup(
+    version='0.1.1',
+    install_requires=[
+        'redbaron',
+        'texttable',
+    ],
+)
