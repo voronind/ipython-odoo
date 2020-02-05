@@ -6,7 +6,7 @@ from ipython_odoo.connect import sweeten
 from .tracer import Tracer
 from .hierarchy import get_model_attrs, prepare_model_attrs, print_model_attrs
 from .tables import print_recorset
-from .procurmenet_rules import print_warehouse_rules, print_warehouse_rules_table
+from .procurement_rules import print_warehouse_rules
 
 
 @magics_class
@@ -15,7 +15,6 @@ class MyMagics(Magics):
     @line_magic
     def sugar(self, line):
         sweeten(self.shell.user_ns)
-
 
     @line_magic
     def t(self, line):
@@ -48,4 +47,4 @@ class MyMagics(Magics):
 
     @line_magic
     def rules(self, line):
-        print_warehouse_rules_table(line, self.shell.user_ns)
+        print_warehouse_rules(line, self.shell.user_ns)

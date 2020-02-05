@@ -1,34 +1,6 @@
 # coding=utf8
 
-from collections import OrderedDict, defaultdict
 from texttable import Texttable
-
-
-def _search_suitable_rule(self, domain):
-    """ First find a rule among the ones defined on the procurement order
-    group; then try on the routes defined for the product; finally fallback
-    on the default behavior """
-    if self.warehouse_id:
-        domain = expression.AND(
-            [['|', ('warehouse_id', '=', self.warehouse_id.id), ('warehouse_id', '=', False)], domain])
-    Pull = self.env['procurement.rule']
-    res = self.env['procurement.rule']
-    if self.route_ids:
-        res = Pull.search(expression.AND([[('route_id', 'in', self.route_ids.ids)], domain]),
-                          order='route_sequence, sequence', limit=1)
-    if not res:
-        product_routes = self.product_id.route_ids | self.product_id.categ_id.total_route_ids
-        if product_routes:
-            res = Pull.search(expression.AND([[('route_id', 'in', product_routes.ids)], domain]),
-                              order='route_sequence, sequence', limit=1)
-    if not res:
-        warehouse_routes = self.warehouse_id.route_ids
-        if warehouse_routes:
-            res = Pull.search(expression.AND([[('route_id', 'in', warehouse_routes.ids)], domain]),
-                              order='route_sequence, sequence', limit=1)
-    if not res:
-        res = Pull.search(expression.AND([[('route_id', '=', False)], domain]), order='sequence', limit=1)
-    return res
 
 
 def parent_locations(location):
@@ -108,11 +80,11 @@ def selectable(route):
     return u' '.join(result)
 
 
-def procure_method(rule):
-    if rule.procure_method == 'make_to_order':
-        return 'order'
-    elif rule.procure_method == 'make_to_stock':
-        return 'stock'
+# def procure_method(rule):
+#     if rule.procure_method == 'make_to_order':
+#         return 'order'
+#     elif rule.procure_method == 'make_to_stock':
+#         return 'stock'
 
 
 def route_name(route):
@@ -125,7 +97,6 @@ def route_name(route):
 
 def warehouse_rules(warehouse):
     from collections import OrderedDict
-    from odoo.osv import expression
 
     result = OrderedDict()
 
@@ -174,27 +145,13 @@ def warehouse_rules(warehouse):
     return result
 
 
-def print_warehouse_rules(line, user_ns):
-    warehouse = eval(line, user_ns)
-    result = warehouse_rules(warehouse)
-
-    for location, routes in result.items():
-        print ' ' * 0, location
-        for route, rules in routes.items():
-            print ' ' * 4, route
-            for rule in rules:
-                print ' ' * 8, rule
-            print
-        print
-
-
 def format_record(record):
     # return u'{0.id}. {0.name}'.format(record)
     return u'{0.name} ({0.id})'.format(record)
 
 
 def format_sequence_record(record):
-    return u'{: >2}. {}'.format(record.sequence, format_record(record))
+    return u'{: >2} {}'.format(record.sequence, format_record(record))
 
 
 def format_location(location):
@@ -207,7 +164,7 @@ def format_route(route, warehouse):
     route_warehouses = route.warehouse_ids
     if warehouse in route_warehouses:
         route_warehouses -= warehouse
-        string += u' ✓'
+        string += u' ✓ wh'
 
     if route.company_id:
         string += u'\n    {}'.format(format_record(route.company_id))
@@ -221,19 +178,41 @@ def format_route(route, warehouse):
 
 
 def format_rule(rule):
-    string = (format_sequence_record(rule)
-              + u'\n    {} {}'.format(rule.action, procure_method(rule)))
+    string = ''
+
+    wh = rule.warehouse_id
+    if wh.buy_pull_id == rule:
+        string += u' ✓ buy rule\n'
+
+    elif wh.manufacture_pull_id == rule:
+        string += u' ✓ man rule\n'
+
+    elif wh.mto_pull_id == rule:
+        string += u' ✓ mto rule\n'
+
+    elif wh.mts_mto_rule_id == rule:
+        string += u' ✓ mts+mto rule\n'
+
+    string += format_sequence_record(rule)
+
+    string += u'\n   {}'.format(rule.action)
+
+    if rule.procure_method == 'make_to_order':
+        string += u'\n   make_to_order'
+
+    if rule.action == 'buy':
+        string +=
 
     if rule.mto_rule_id or rule.mts_rule_id:
-        string += u'\n    mto -> {}, mts -> {}'.format(rule.mto_rule_id.id, rule.mts_rule_id.id)
+        string += u'\n   mto: {}, mts: {}'.format(rule.mto_rule_id.id, rule.mts_rule_id.id)
 
     if rule.location_src_id:
-        string += u'\n    {} ->'.format(format_record(rule.location_src_id))
+        string += u'\n   {} ->'.format(format_record(rule.location_src_id))
 
     return string
 
 
-def print_warehouse_rules_table(line, user_ns):
+def print_warehouse_rules(line, user_ns):
     warehouse = eval(line, user_ns)
     result = warehouse_rules(warehouse)
 
