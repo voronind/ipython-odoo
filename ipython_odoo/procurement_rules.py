@@ -201,7 +201,7 @@ def format_rule(rule):
         string += u'\n   make_to_order'
 
     if rule.action == 'buy':
-        string +=
+        string += u'\n   gpo: {}'.format(rule.group_propagation_option)
 
     if rule.mto_rule_id or rule.mts_rule_id:
         string += u'\n   mto: {}, mts: {}'.format(rule.mto_rule_id.id, rule.mts_rule_id.id)
