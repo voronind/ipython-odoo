@@ -190,7 +190,7 @@ def format_rule(rule):
     elif wh.mto_pull_id == rule:
         string += u' ✓ mto rule\n'
 
-    elif wh.mts_mto_rule_id == rule:
+    elif getattr(wh, 'mts_mto_rule_id', None) == rule:
         string += u' ✓ mts+mto rule\n'
 
     string += format_sequence_record(rule)
@@ -203,8 +203,11 @@ def format_rule(rule):
     if rule.action == 'buy':
         string += u'\n   gpo: {}'.format(rule.group_propagation_option)
 
-    if rule.mto_rule_id or rule.mts_rule_id:
-        string += u'\n   mto: {}, mts: {}'.format(rule.mto_rule_id.id, rule.mts_rule_id.id)
+    # If stock_mts_mto_rule module isn't installed
+    mto_rule = getattr(rule, 'mto_rule_id', None)
+    mts_rule = getattr(rule, 'mts_rule_id', None)
+    if mto_rule or mts_rule:
+        string += u'\n   mto: {}, mts: {}'.format(mto_rule.id, mts_rule.id)
 
     if rule.location_src_id:
         string += u'\n   {} ->'.format(format_record(rule.location_src_id))
