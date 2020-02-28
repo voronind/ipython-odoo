@@ -65,6 +65,7 @@ def print_table(table):
 # TODO skip __xml_id__ row if no data
 PINNED_FIELD_NAMES = [
     'id',
+    'display_name',
     'name',
     # 'create_date',
     # 'create_uid',
@@ -97,7 +98,7 @@ def get_field_names(fields):
 
     pinned_field_names = OrderedDict({'__xml_id__': '__xml_id__'})
     pinned_field_names.update((pinned_field_name, field_names.pop(pinned_field_name, ''))
-                              for pinned_field_name in PINNED_FIELD_NAMES)
+                              for pinned_field_name in PINNED_FIELD_NAMES if pinned_field_name in field_names)
 
     pinned_field_names.update(field_names)
 
