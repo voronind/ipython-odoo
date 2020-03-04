@@ -224,19 +224,14 @@ def model_str(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            name = record.name
+            display_name = record.display_name
 
-            if not name:
-                name = u'---'
-
-            if len(name) > 40:
-                name = name[:39] + u'...'
+            if len(display_name) > 40:
+                display_name = display_name[:39] + '...'
             # strip u in u'...'
-            name = repr(name)[1:]
-            ids_part.append('{}: {}'.format(record.id, name))
-        result = '{}({})'.format(self._name, ', '.join(ids_part))
-        # return result.encode('utf8')
-        return result
+            display_name = repr(display_name)[1:]
+            ids_part.append('{}: {}'.format(record.id, display_name))
+        return '{}({})'.format(self._name, ', '.join(ids_part))
 
     return "%s%s" % (self._name, getattr(self, '_ids', ""))
 
@@ -245,14 +240,11 @@ def model_unicode(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            name = record.name
+            display_name = record.display_name
 
-            if not name:
-                name = u'---'
-
-            if len(name) > 40:
-                name = name[:39] + u'…'
-            ids_part.append(u"{}: '{}'".format(record.id, name))
+            if len(display_name) > 40:
+                display_name = display_name[:39] + u'…'
+            ids_part.append(u"{}: '{}'".format(record.id, display_name))
         return u'{}({})'.format(self._name, u', '.join(ids_part))
 
     return u"%s%s" % (self._name, getattr(self, '_ids', ""))
