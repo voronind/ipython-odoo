@@ -80,19 +80,29 @@ def selectable(route):
     return u' '.join(result)
 
 
-# def procure_method(rule):
-#     if rule.procure_method == 'make_to_order':
-#         return 'order'
-#     elif rule.procure_method == 'make_to_stock':
-#         return 'stock'
-
-
 def route_name(route):
     if not route:
         return False
 
     return u'{route.sequence: 2d}. {route.name} ({route.id}) [{selectable}], [{wh}]'.format(
         route=route, selectable=selectable(route), wh=route.warehouse_ids)
+
+
+def route_sorted_key(route):
+
+    if route.sale_selectable:
+        selectable_index = 1
+
+    elif route.product_selectable or route.product_categ_selectable:
+        selectable_index = 2
+
+    elif route.warehouse_selectable:
+        selectable_index = 3
+
+    else:
+        selectable_index = 4
+
+    return (route.sequence, selectable_index)
 
 
 def warehouse_rules(warehouse):
@@ -102,56 +112,43 @@ def warehouse_rules(warehouse):
 
     env = warehouse.env
 
-    # if isinstance(warehouse, int):
-    #     warehouse = env['stock.warehouse'].browse(warehouse)
-
     if warehouse._name == 'res.company':
         warehouse = env['res.company'].search([('company_id', '=', warehouse.id)], limit=1)
 
     assert warehouse._name == 'stock.warehouse'
 
-    rules = env['procurement.rule'].search([('warehouse_id', '=', warehouse.id)])
-    
-    locations = rules.mapped('location_id').sorted('id')
-    routes = rules.mapped('route_id').sorted(lambda r: r.sequence if r.sequence else 999)
+    warehouse_locations = (env['stock.location'].search([('location_id', 'child_of', warehouse.view_location_id.id)])
+                           | env.ref('stock.stock_location_customers'))
 
-    no_route_rules = rules.filtered(lambda r: not r.route_id)
-    if no_route_rules:
-        routes = [route for route in routes] + [no_route_rules[0].route_id]
+    rules = env['procurement.rule'].search([
+        ('location_id', 'in', warehouse_locations.ids),
+        '|', ('warehouse_id', '=', warehouse.id),
+             ('warehouse_id', '=', False),
+    ])
+
+    routes = list(rules.mapped('route_id').sorted(key=route_sorted_key))
+
+    if rules.filtered(lambda r: not r.route_id):
+        routes.append(env['stock.location.route'])
 
     for route in routes:
         result[route] = row = OrderedDict()
-        for location in locations:
+        for location in rules.mapped('location_id'):
             row[location] = (rules.filtered(lambda r: r.route_id == route and r.location_id == location)
                              .sorted('sequence'))
-
-        no_route_rules = (rules.filtered(lambda r: r.route_id == False and r.location_id == False)
-                      .sorted('sequence'))
-
-        if no_route_rules:
-            row[False] = no_route_rules
-
-    # for rule in rules.sorted(lambda r: (r.route_sequence if r.route_sequence else 999, r.sequence)):
-    #     for
-    #
-    #     if rule.location_id not in result:
-    #         result[rule.location_id] = OrderedDict()
-    #
-    #     if rule.route_id not in result[rule.location_id]:
-    #         result[rule.location_id][rule.route_id] = env['procurement.rule']
-    #
-    #     result[rule.location_id][rule.route_id] |= rule
 
     return result
 
 
 def format_record(record):
-    # return u'{0.id}. {0.name}'.format(record)
-    return u'{0.name} ({0.id})'.format(record)
+    if record:
+        return u'{0.name} ({0.id})'.format(record)
+    else:
+        return u'False'
 
 
 def format_sequence_record(record):
-    return u'{: >2} {}'.format(record.sequence, format_record(record))
+    return u'{: >2} {}'.format(record.sequence if record else '', format_record(record))
 
 
 def format_location(location):
@@ -161,18 +158,16 @@ def format_location(location):
 def format_route(route, warehouse):
     string = format_sequence_record(route)
 
-    route_warehouses = route.warehouse_ids
-    if warehouse in route_warehouses:
-        route_warehouses -= warehouse
-        string += u' ✓ wh'
+    if warehouse in route.warehouse_ids:
+        string += u' ✓'
 
     if route.company_id:
-        string += u'\n    {}'.format(format_record(route.company_id))
+        string += u'\n   {}'.format(format_record(route.company_id))
 
-    string += u'\n    {}'.format(selectable(route))
+    string += u'\n   {}'.format(selectable(route))
 
-    for warehouse in route_warehouses:
-        string += u'\n    {}'.format(format_record(warehouse))
+    for route_warehouse in route.warehouse_ids:
+        string += u'\n   {}'.format(format_record(route_warehouse))
 
     return string
 
