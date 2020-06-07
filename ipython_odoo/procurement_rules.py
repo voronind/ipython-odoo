@@ -192,8 +192,8 @@ def format_rule(rule):
 
     string += u'\n   {}'.format(rule.action)
 
-    if rule.procure_method == 'make_to_order':
-        string += u'\n   make_to_order'
+    if rule.action == 'move' or rule.procure_method == 'make_to_order':
+        string += u'\n   ' + rule.procure_method
 
     if rule.action == 'buy':
         string += u'\n   gpo: {}'.format(rule.group_propagation_option)
