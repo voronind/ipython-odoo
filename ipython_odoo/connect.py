@@ -482,7 +482,10 @@ def init_odoo():
 def sweeten(user_ns):
     start_time = time.time()
 
-    env = user_ns['env']
+    env = user_ns.get('env')
+    if not env:
+        print('No env var')
+        return
 
     user_ns.update({
         'cr': env.cr,
