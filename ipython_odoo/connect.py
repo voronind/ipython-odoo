@@ -1,8 +1,9 @@
 # coding=utf8
 
 import time
-from collections import OrderedDict, namedtuple
 from keyword import iskeyword
+from functools import partial
+from collections import OrderedDict, namedtuple
 
 from odoo.models import BaseModel, MAGIC_COLUMNS
 
@@ -287,7 +288,7 @@ def patch_models(env):
         model.__class__.__repr__ = model_str
 
 
-def recompute(field):
+def recompute(env, field):
     if not field.compute:
         raise ValueError('Field has no compute')
 
@@ -517,7 +518,7 @@ def sweeten(user_ns):
         'rollback': env.cr.rollback,
         'ref': env.ref,
 
-        'recompute': recompute,
+        'recompute': partial(recompute, env),
     })
 
     user_ns.update(get_model_vars(env))
