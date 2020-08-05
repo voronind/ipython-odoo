@@ -1,7 +1,10 @@
 # coding=utf8
 
 import time
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
+from keyword import iskeyword
+
+from odoo.models import BaseModel, MAGIC_COLUMNS
 
 from .model_names import CONVERT_ENV_KEYS
 
@@ -250,26 +253,47 @@ def model_unicode(self):
     return u"%s%s" % (self._name, getattr(self, '_ids', ""))
 
 
+def model_add_search(model):
+    kwarg_names = get_search_func_kwargs(model)
+
+    kwargs_def = ', '.join(kwarg_name + '=None' for kwarg_name in kwarg_names)
+    kwargs_set = '{' + ','.join(map(repr, kwarg_names)) + '}'
+
+    model_search_def = search_def.format(kwargs=kwargs_def, kwargs_set=kwargs_set)
+
+    exec (model_search_def)
+    model.__class__.__call__ = search
+
+
+IGNORE_FIELDS = set(MAGIC_COLUMNS) | {BaseModel.CONCURRENCY_CHECK_FIELD, '_barcode_scanned'}
+
+
+def model_add_fields_attr(model):
+    fields = {field_name if not iskeyword(field_name) else field_name + '_': field
+              for field_name, field in model._fields.items()
+              if field_name not in IGNORE_FIELDS}
+
+    Fields = namedtuple('Fields', sorted(fields.keys()))
+    model.__class__.f = Fields(**fields)
+
+
 def patch_models(env):
     for model in env.values():
-        common_kwargs = {
-            'limit': 1000,
-        }
+        model_add_search(model)
+        model_add_fields_attr(model)
 
-        kwarg_names = get_search_func_kwargs(model)
-
-        kwargs_def = ', '.join(kwarg_name + '=None' for kwarg_name in kwarg_names)
-        kwargs_set = '{' + ','.join(map(repr, kwarg_names)) + '}'
-
-        model_search_def = search_def.format(kwargs=kwargs_def, kwargs_set=kwargs_set)
-
-        exec (model_search_def)
-        model.__class__.__call__ = search
-
-        # model.__class__._origin__str__ = model.__class__.__str__
         model.__class__.__str__ = model_str
         model.__class__.__unicode__ = model_unicode
         model.__class__.__repr__ = model_str
+
+
+def recompute(field):
+    if not field.compute:
+        raise ValueError('Field has no compute')
+
+    model = env[field.model_name]
+    env.add_todo(field, model.search([]))
+    model.recompute()
 
 
 # def get_odoo_domain(domain):
@@ -492,6 +516,8 @@ def sweeten(user_ns):
         'commit': env.cr.commit,
         'rollback': env.cr.rollback,
         'ref': env.ref,
+
+        'recompute': recompute,
     })
 
     user_ns.update(get_model_vars(env))
