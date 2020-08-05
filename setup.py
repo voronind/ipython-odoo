@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    version='0.1.5',
+    version='0.2',
     install_requires=[
         'redbaron',
         'texttable',
