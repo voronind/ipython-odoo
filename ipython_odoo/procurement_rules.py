@@ -166,9 +166,6 @@ def format_route(route, warehouse):
 
     string += u'\n   {}'.format(selectable(route))
 
-    for route_warehouse in route.warehouse_ids:
-        string += u'\n   {}'.format(format_record(route_warehouse))
-
     return string
 
 
