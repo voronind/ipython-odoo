@@ -730,4 +730,7 @@ CONVERT_ENV_KEYS = {
 
     # website_twitter
     'website.twitter.tweet': 'twitter_tweet',
+
+    # Legal Entity
+    'sintez.legal.entity': 'legal_entity',
 }
