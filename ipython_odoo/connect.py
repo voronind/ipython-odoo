@@ -514,8 +514,6 @@ def sweeten(user_ns):
 
     user_ns.update({
         'cr': env.cr,
-        'commit': env.cr.commit,
-        'rollback': env.cr.rollback,
         'ref': env.ref,
 
         'recompute': partial(recompute, env),
@@ -525,3 +523,15 @@ def sweeten(user_ns):
     patch_models(env)
 
     print('Time spent: {:.1f}s'.format(time.time() - start_time))
+
+
+def commit(user_ns, line):
+    env_line = line if line else 'env'
+    env = eval(env_line, user_ns)
+    env.cr.commit()
+
+
+def rollback(user_ns, line):
+    env_line = line if line else 'env'
+    env = eval(env_line, user_ns)
+    env.cr.rollback()

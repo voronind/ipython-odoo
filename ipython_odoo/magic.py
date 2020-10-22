@@ -2,7 +2,7 @@ import sys
 
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 
-from ipython_odoo.connect import sweeten
+from ipython_odoo.connect import sweeten, rollback, commit
 from ipython_odoo.related_fields import related_fields
 from .tracer import Tracer
 from .hierarchy import get_model_attrs, prepare_model_attrs, print_model_attrs
@@ -16,6 +16,14 @@ class MyMagics(Magics):
     @line_magic
     def sugar(self, line):
         sweeten(self.shell.user_ns)
+
+    @line_magic
+    def commit(self, line):
+        commit(self.shell.user_ns, line)
+
+    @line_magic
+    def rollback(self, line):
+        rollback(self.shell.user_ns, line)
 
     @line_magic
     def t(self, line):
