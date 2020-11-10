@@ -2,6 +2,7 @@ import sys
 
 from IPython.core.magic import Magics, magics_class, line_magic, cell_magic, line_cell_magic
 
+from ipython_odoo.access import user_rights
 from ipython_odoo.connect import sweeten, rollback, commit
 from ipython_odoo.related_fields import related_fields
 from .tracer import Tracer
@@ -61,3 +62,7 @@ class MyMagics(Magics):
     @line_magic
     def rf(self, line):
         return related_fields(line, self.shell.user_ns)
+
+    @line_magic
+    def right(self, line):
+        return user_rights(line, self.shell.user_ns)

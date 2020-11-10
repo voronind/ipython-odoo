@@ -217,3 +217,28 @@ def get_humanize_perms(model):
 def get_model_access_dict(model_access):
     return OrderedDict(name=model_access.name, display_name=model_access.display_name,
                        model=model_access.model_id.model, perms=get_humanize_perms(model_access))
+
+
+# =============== Other stuff ==================
+def user_rights(line, user_ns):
+
+    user_literal, model_literal = line.split()
+
+    user = eval(user_literal, user_ns)
+    user.ensure_one()
+
+    model = eval(model_literal, user_ns)
+
+    env = user_ns['env']
+
+    model_access = env['ir.model.access'].search([
+        ('group_id', 'in', user.groups_id.ids),
+        ('model_id', '=', model._name),
+    ])
+
+    rules = env['ir.rule'].search([
+        ('groups', 'in', user.groups_id.ids),
+        ('model_id', '=', model._name),
+    ])
+
+    return model_access, rules
