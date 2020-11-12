@@ -22,7 +22,7 @@ def refferencing_records(env, recordset):
             (field.name, 'in', recordset.ids),
         ])
         if rel_rs:
-            result.append((field.model, field.name, rel_rs))
+            result.append((field.name, rel_rs))
 
     return result
 
