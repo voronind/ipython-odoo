@@ -228,7 +228,7 @@ def model_str(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            display_name = record.display_name
+            display_name = record.display_name or ''
 
             if len(display_name) > 40:
                 display_name = display_name[:39] + '...'
@@ -244,7 +244,7 @@ def model_unicode(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            display_name = record.display_name
+            display_name = record.display_name or u''
 
             if len(display_name) > 40:
                 display_name = display_name[:39] + u'…'
