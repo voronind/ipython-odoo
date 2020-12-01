@@ -1,5 +1,3 @@
-# coding=utf8
-
 import time
 from keyword import iskeyword
 from functools import partial
@@ -235,24 +233,24 @@ def model_str(self):
                 display_name = display_name[:39] + '...'
             # strip u in u'...'
             display_name = repr(display_name)[1:]
-            ids_part.append('{}: {}'.format(record.id, display_name))
+            ids_part.append(f'{record.id}: {display_name}')
         return '{}({})'.format(self._name, ', '.join(ids_part))
 
-    return "%s%s" % (self._name, getattr(self, '_ids', ""))
+    return "{}{}".format(self._name, getattr(self, '_ids', ""))
 
 
 def model_unicode(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            display_name = record.display_name or u''
+            display_name = record.display_name or ''
 
             if len(display_name) > 40:
-                display_name = display_name[:39] + u'…'
-            ids_part.append(u"{}: '{}'".format(record.id, display_name))
-        return u'{}({})'.format(self._name, u', '.join(ids_part))
+                display_name = display_name[:39] + '…'
+            ids_part.append(f"{record.id}: '{display_name}'")
+        return '{}({})'.format(self._name, ', '.join(ids_part))
 
-    return u"%s%s" % (self._name, getattr(self, '_ids', ""))
+    return "{}{}".format(self._name, getattr(self, '_ids', ""))
 
 
 def model_add_search(model):
@@ -409,11 +407,11 @@ def init_odoo():
     update = []
     extra = ''
 
-    updates = ' --update={}'.format(update) if update else ''
+    updates = f' --update={update}' if update else ''
 
     # extra = ' --log-level=debug_sql'
 
-    odoo_args = "--database={} --xmlrpc-port=8099 --addons-path=addons,custom_addons ".format(odoo_db_name) + updates + extra
+    odoo_args = f"--database={odoo_db_name} --xmlrpc-port=8099 --addons-path=addons,custom_addons " + updates + extra
 
     odoo.tools.config.parse_config(odoo_args.split())
 

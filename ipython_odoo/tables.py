@@ -1,4 +1,3 @@
-# coding=utf8
 from collections import OrderedDict
 
 from odoo.models import LOG_ACCESS_COLUMNS, Model
@@ -23,10 +22,10 @@ def prepare_value_for_table(record, field_name):
 
 
 def value_to_str(value, col_width):
-    value_str = unicode(value)
+    value_str = str(value)
 
     if len(value_str) > col_width:
-        return value_str[:col_width - 1] + u'…'
+        return value_str[:col_width - 1] + '…'
 
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return value_str.ljust(col_width)
@@ -60,7 +59,7 @@ def pad_table(table):
 
 def print_table(table):
     for row in table:
-        print(u' '.join(row))
+        print(' '.join(row))
 
 # TODO skip __xml_id__ row if no data
 PINNED_FIELD_NAMES = [
@@ -81,7 +80,7 @@ def field_detailed_name(field):
     detailed_name = field.name
 
     if field.related:
-        detailed_name += u' → ' + u'.'.join(field.related)
+        detailed_name += ' → ' + '.'.join(field.related)
 
     return detailed_name
 

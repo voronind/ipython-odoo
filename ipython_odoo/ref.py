@@ -1,6 +1,5 @@
-
 def generate_ref(env):
-    env.cr.execute("""
+    env.cr.execute(r"""
         select
             module,
             string_agg(name, ',')
@@ -26,7 +25,7 @@ def generate_ref(env):
         })
         Ref_attrs[module] = ModuleRefs()
 
-    Ref_attrs['__slots__'] = Ref_attrs.keys()
+    Ref_attrs['__slots__'] = list(Ref_attrs.keys())
     Ref = type('Ref', (), Ref_attrs)
 
     return Ref()
