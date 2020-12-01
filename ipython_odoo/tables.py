@@ -1,4 +1,3 @@
-# coding=utf8
 from collections import OrderedDict
 
 from odoo.models import LOG_ACCESS_COLUMNS, Model
@@ -60,7 +59,7 @@ def pad_table(table):
 
 def print_table(table):
     for row in table:
-        print((' '.join(row)))
+        print(' '.join(row))
 
 # TODO skip __xml_id__ row if no data
 PINNED_FIELD_NAMES = [

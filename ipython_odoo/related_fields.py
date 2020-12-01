@@ -1,5 +1,3 @@
-
-
 # merge
 def merge(model, replaceents):
     pass

@@ -1,6 +1,5 @@
-
 def generate_ref(env):
-    env.cr.execute("""
+    env.cr.execute(r"""
         select
             module,
             string_agg(name, ',')

@@ -5,7 +5,7 @@ PERM_NAMES = ('read', 'write', 'create', 'unlink')
 PERMS = tuple('perm_' + perm_name for perm_name in PERM_NAMES)
 
 
-class ModelRestrictions(object):
+class ModelRestrictions:
     def __init__(self):
         self.model_accesses = []
         self.global_rules = []
@@ -147,7 +147,7 @@ def calc_model_access(env, access_or_rule_list):
                     perms[perm] = access_or_rule
 
 
-class RuleNode(object):
+class RuleNode:
     OPERATORS = {'!', '&', '|'}
 
     def __init__(self, value, left=None, right=None, domain=None):

@@ -1,5 +1,3 @@
-# coding=utf8
-
 from texttable import Texttable
 
 
@@ -187,19 +185,19 @@ def format_rule(rule):
 
     string += format_sequence_record(rule)
 
-    string += '\n   {}'.format(rule.action)
+    string += f'\n   {rule.action}'
 
     if rule.action == 'move' or rule.procure_method == 'make_to_order':
         string += '\n   ' + rule.procure_method
 
     if rule.action == 'buy':
-        string += '\n   gpo: {}'.format(rule.group_propagation_option)
+        string += f'\n   gpo: {rule.group_propagation_option}'
 
     # If stock_mts_mto_rule module isn't installed
     mto_rule = getattr(rule, 'mto_rule_id', None)
     mts_rule = getattr(rule, 'mts_rule_id', None)
     if mto_rule or mts_rule:
-        string += '\n   mto: {}, mts: {}'.format(mto_rule.id, mts_rule.id)
+        string += f'\n   mto: {mto_rule.id}, mts: {mts_rule.id}'
 
     if rule.location_src_id:
         string += '\n   {} ->'.format(format_record(rule.location_src_id))
@@ -219,10 +217,10 @@ def print_warehouse_rules(line, user_ns):
     attrs = []
     attrs.append([''] + [format_location(location) for location in locations])
 
-    for route, locations in list(result.items()):
+    for route, locations in result.items():
         row = [format_route(route, warehouse)]
         attrs.append(row)
-        for location, rules in list(locations.items()):
+        for location, rules in locations.items():
             row.append('\n\n'.join(map(format_rule, rules)))
 
     table = Texttable()
@@ -232,4 +230,4 @@ def print_warehouse_rules(line, user_ns):
 
     table.add_rows(attrs)
 
-    print((table.draw()))
+    print(table.draw())

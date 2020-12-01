@@ -1,4 +1,3 @@
-# coding=utf8
 __import__('os').environ['TZ'] = 'UTC'
 __import__('pkg_resources').declare_namespace('odoo.addons')
 

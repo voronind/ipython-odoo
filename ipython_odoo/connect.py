@@ -1,5 +1,3 @@
-# coding=utf8
-
 import time
 from keyword import iskeyword
 from functools import partial
@@ -14,7 +12,7 @@ from .model_names import CONVERT_ENV_KEYS
 def get_model_vars(env):
     model_vars = {}
 
-    for key, model in list(env.items()):
+    for key, model in env.items():
         if key in CONVERT_ENV_KEYS:
             model_vars[CONVERT_ENV_KEYS[key]] = model
         else:
@@ -79,7 +77,7 @@ SUFFIX_TO_OPERATOR = OrderedDict([
     ('_child_of', 'child_of'),
 ])
 
-OPERATOR_TO_SUFFIX = {operator: suffix for suffix, operator in list(SUFFIX_TO_OPERATOR.items())}
+OPERATOR_TO_SUFFIX = {operator: suffix for suffix, operator in SUFFIX_TO_OPERATOR.items()}
 
 # INTEGER_OPS = ['=', '!=', '>', '<', '>=', '<=', 'not in', 'in']
 # CHAR_OPS = ['=', '!=', '=like', '=ilike', 'not like', 'like', 'not ilike', 'ilike']   # _ -> ilike, _eq -> =
@@ -178,7 +176,7 @@ assert len(set(OPERATOR_TO_SUFFIX.keys())) == len(OPERATOR_TO_SUFFIX), 'Not all 
 def get_search_func_kwargs(model):
     # kwargs = {}
     kwargs = []
-    for field_name, field in list(model._fields.items()):
+    for field_name, field in model._fields.items():
         if field.type in suffix_choser:
             kwargs.extend(field_name + op_suffix for op_suffix in suffix_choser[field.type])
 
@@ -231,10 +229,10 @@ def model_str(self):
 
             if len(display_name) > 40:
                 display_name = display_name[:39] + '…'
-            ids_part.append("{}: '{}'".format(record.id, display_name))
+            ids_part.append(f"{record.id}: '{display_name}'")
         return '{}({})'.format(self._name, ', '.join(ids_part))
 
-    return "%s%s" % (self._name, getattr(self, '_ids', ""))
+    return "{}{}".format(self._name, getattr(self, '_ids', ""))
 
 
 def model_add_search(model):
@@ -258,7 +256,7 @@ IGNORE_FIELDS = set(MAGIC_COLUMNS) | {BaseModel.CONCURRENCY_CHECK_FIELD, '_barco
 
 def model_add_fields_attr(model):
     fields = {field_name if not iskeyword(field_name) else field_name + '_': field
-              for field_name, field in list(model._fields.items())
+              for field_name, field in model._fields.items()
               if field_name not in IGNORE_FIELDS}
 
     Fields = namedtuple('Fields', sorted(fields.keys()))
@@ -266,7 +264,7 @@ def model_add_fields_attr(model):
 
 
 def patch_models(env):
-    for model in list(env.values()):
+    for model in env.values():
         model_add_search(model)
         model_add_fields_attr(model)
 
@@ -394,11 +392,11 @@ def init_odoo():
     update = []
     extra = ''
 
-    updates = ' --update={}'.format(update) if update else ''
+    updates = f' --update={update}' if update else ''
 
     # extra = ' --log-level=debug_sql'
 
-    odoo_args = "--database={} --xmlrpc-port=8099 --addons-path=addons,custom_addons ".format(odoo_db_name) + updates + extra
+    odoo_args = f"--database={odoo_db_name} --xmlrpc-port=8099 --addons-path=addons,custom_addons " + updates + extra
 
     odoo.tools.config.parse_config(odoo_args.split())
 
@@ -458,7 +456,7 @@ def init_odoo():
     # for model in models.values():
     #     model.__class__.__call__ = model_call_method
 
-    print(('Time it: {:.3f}'.format(time.time() - start_time)))
+    print('Time it: {:.3f}'.format(time.time() - start_time))
 
     user_ns['environment_management'] = env_manage
     return user_ns
@@ -508,7 +506,7 @@ def sweeten(user_ns):
     user_ns.update(get_model_vars(env))
     patch_models(env)
 
-    print(('Time spent: {:.1f}s'.format(time.time() - start_time)))
+    print('Time spent: {:.1f}s'.format(time.time() - start_time))
 
 
 def commit(user_ns, line):

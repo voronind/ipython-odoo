@@ -1,4 +1,3 @@
-
 from ipython_odoo.access import from_polish_notation
 
 
