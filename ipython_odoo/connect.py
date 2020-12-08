@@ -214,34 +214,16 @@ def search(self, ids=None, count=False, {kwargs}):
         if domains:
             raise ValueError('No ids and kwargs together')
 
-        if isinstance(ids, (str, unicode)):
+        if isinstance(ids, str):
             domains.append(('name', 'ilike', ids))
         else:
             return self.browse(ids)
-
-    # domains.append(('create_date', '>', '2019-11-24 10:55:00'))
 
     return self.search(domains, count=count)
 '''
 
 
 def model_str(self):
-    if 1 <= len(self) <= 1 and 'name' in self._fields:
-        ids_part = []
-        for record in self:
-            display_name = record.display_name or ''
-
-            if len(display_name) > 40:
-                display_name = display_name[:39] + '...'
-            # strip u in u'...'
-            display_name = repr(display_name)[1:]
-            ids_part.append('{}: {}'.format(record.id, display_name))
-        return '{}({})'.format(self._name, ', '.join(ids_part))
-
-    return "%s%s" % (self._name, getattr(self, '_ids', ""))
-
-
-def model_unicode(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
@@ -258,13 +240,17 @@ def model_unicode(self):
 def model_add_search(model):
     kwarg_names = get_search_func_kwargs(model)
 
+    if len(kwarg_names) > 255:
+        print(f'Model {model} have more 255 args')
+        return
+
     kwargs_def = ', '.join(kwarg_name + '=None' for kwarg_name in kwarg_names)
     kwargs_set = '{' + ','.join(map(repr, kwarg_names)) + '}'
 
     model_search_def = search_def.format(kwargs=kwargs_def, kwargs_set=kwargs_set)
 
-    exec (model_search_def)
-    model.__class__.__call__ = search
+    exec(model_search_def, globals(), locals())
+    model.__class__.__call__ = locals()['search']
 
 
 IGNORE_FIELDS = set(MAGIC_COLUMNS) | {BaseModel.CONCURRENCY_CHECK_FIELD, '_barcode_scanned'}
@@ -285,7 +271,6 @@ def patch_models(env):
         model_add_fields_attr(model)
 
         model.__class__.__str__ = model_str
-        model.__class__.__unicode__ = model_unicode
         model.__class__.__repr__ = model_str
 
 
