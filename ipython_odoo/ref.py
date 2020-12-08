@@ -19,10 +19,11 @@ def generate_ref(env):
     Ref_attrs = {}
     for module, names in env.cr.fetchall():
         ModuleRefs = type('ModuleRefs', (), {
-            '__slots__': names.split(',') + ['module', 'env'],
-            'env': env,
-            'module': module,
-            '__getattr__': lambda self, name: self.env.ref(self.module + '.' + name),
+            # '__slots__': names.split(',') + ['_module', '_env'],
+            '__slots__': names.split(','),
+            '_env': env,
+            '_module': module,
+            '__getattr__': lambda self, name: self._env.ref(self._module + '.' + name),
         })
         Ref_attrs[module] = ModuleRefs()
 

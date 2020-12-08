@@ -8,7 +8,7 @@ from collections import OrderedDict, namedtuple
 from odoo.models import BaseModel, MAGIC_COLUMNS
 
 from .model_names import CONVERT_ENV_KEYS
-from .ref import generate_ref
+# from .ref import generate_ref
 
 
 def get_model_vars(env):
@@ -500,7 +500,7 @@ def sweeten(user_ns):
 
     user_ns.update({
         'cr': env.cr,
-        'ref': generate_ref(env),
+        # 'ref': generate_ref(env),
 
         'recompute': partial(recompute, env),
     })
