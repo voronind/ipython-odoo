@@ -15,7 +15,7 @@ def prepare_function(func):
     try:
         func_source = inspect.getsource(func)
     except IOError as error:
-        func_source = unicode(error)
+        func_source = str(error)
 
     # Decrease indent
     func_source_lines = [line for line in func_source.splitlines() if line.strip()]
@@ -48,7 +48,7 @@ def prepare_function(func):
     if len(func_body_source) < 180:
         return func_body_source
     else:
-        return u'✓'
+        return '✓'
 
 
 def recordset_models(recordset):
@@ -93,15 +93,15 @@ def prepare_model_attrs(attrs):
     row_count = len(attrs)
     col_count = len(attrs[0])
 
-    for col in xrange(col_count):
-        for row in xrange(row_count):
+    for col in range(col_count):
+        for row in range(row_count):
             attr = attrs[row][col]
 
             if isinstance(attr, Field):
                 attrs[row][col] = attr.__class__.__name__
 
             elif attr is None:
-                attrs[row][col] = u''
+                attrs[row][col] = ''
 
             elif callable(attr):
                 # attrs[row][col] = u'✓'
@@ -118,7 +118,7 @@ def print_model_attrs(attrs):
 
     table.add_rows(attrs)
 
-    print(table.draw())
+    print((table.draw()))
 
 # Python AST
 # https://github.com/PyCQA/redbaron         Preferred

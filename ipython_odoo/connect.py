@@ -14,7 +14,7 @@ from .ref import generate_ref
 def get_model_vars(env):
     model_vars = {}
 
-    for key, model in env.items():
+    for key, model in list(env.items()):
         if key in CONVERT_ENV_KEYS:
             model_vars[CONVERT_ENV_KEYS[key]] = model
         else:
@@ -79,7 +79,7 @@ SUFFIX_TO_OPERATOR = OrderedDict([
     ('_child_of', 'child_of'),
 ])
 
-OPERATOR_TO_SUFFIX = {operator: suffix for suffix, operator in SUFFIX_TO_OPERATOR.items()}
+OPERATOR_TO_SUFFIX = {operator: suffix for suffix, operator in list(SUFFIX_TO_OPERATOR.items())}
 
 # INTEGER_OPS = ['=', '!=', '>', '<', '>=', '<=', 'not in', 'in']
 # CHAR_OPS = ['=', '!=', '=like', '=ilike', 'not like', 'like', 'not ilike', 'ilike']   # _ -> ilike, _eq -> =
@@ -178,7 +178,7 @@ assert len(set(OPERATOR_TO_SUFFIX.keys())) == len(OPERATOR_TO_SUFFIX), 'Not all 
 def get_search_func_kwargs(model):
     # kwargs = {}
     kwargs = []
-    for field_name, field in model._fields.items():
+    for field_name, field in list(model._fields.items()):
         if field.type in suffix_choser:
             kwargs.extend(field_name + op_suffix for op_suffix in suffix_choser[field.type])
 
@@ -245,14 +245,14 @@ def model_unicode(self):
     if 1 <= len(self) <= 1 and 'name' in self._fields:
         ids_part = []
         for record in self:
-            display_name = record.display_name or u''
+            display_name = record.display_name or ''
 
             if len(display_name) > 40:
-                display_name = display_name[:39] + u'…'
-            ids_part.append(u"{}: '{}'".format(record.id, display_name))
-        return u'{}({})'.format(self._name, u', '.join(ids_part))
+                display_name = display_name[:39] + '…'
+            ids_part.append("{}: '{}'".format(record.id, display_name))
+        return '{}({})'.format(self._name, ', '.join(ids_part))
 
-    return u"%s%s" % (self._name, getattr(self, '_ids', ""))
+    return "%s%s" % (self._name, getattr(self, '_ids', ""))
 
 
 def model_add_search(model):
@@ -272,7 +272,7 @@ IGNORE_FIELDS = set(MAGIC_COLUMNS) | {BaseModel.CONCURRENCY_CHECK_FIELD, '_barco
 
 def model_add_fields_attr(model):
     fields = {field_name if not iskeyword(field_name) else field_name + '_': field
-              for field_name, field in model._fields.items()
+              for field_name, field in list(model._fields.items())
               if field_name not in IGNORE_FIELDS}
 
     Fields = namedtuple('Fields', sorted(fields.keys()))
@@ -280,7 +280,7 @@ def model_add_fields_attr(model):
 
 
 def patch_models(env):
-    for model in env.values():
+    for model in list(env.values()):
         model_add_search(model)
         model_add_fields_attr(model)
 
@@ -473,7 +473,7 @@ def init_odoo():
     # for model in models.values():
     #     model.__class__.__call__ = model_call_method
 
-    print('Time it: {:.3f}'.format(time.time() - start_time))
+    print(('Time it: {:.3f}'.format(time.time() - start_time)))
 
     user_ns['environment_management'] = env_manage
     return user_ns
@@ -523,7 +523,7 @@ def sweeten(user_ns):
     user_ns.update(get_model_vars(env))
     patch_models(env)
 
-    print('Time spent: {:.1f}s'.format(time.time() - start_time))
+    print(('Time spent: {:.1f}s'.format(time.time() - start_time)))
 
 
 def commit(user_ns, line):

@@ -12,7 +12,7 @@ def pre_execute():
 
 
 def pre_run_cell(self, info):
-    print('Cell code: "%s"' % info.raw_cell)
+    print(('Cell code: "%s"' % info.raw_cell))
 
 
 def load_ipython_extension(ipython):

@@ -8,6 +8,7 @@ from functools import wraps
 from odoo.models import BaseModel
 
 from .hierarchy import recordset_models
+from functools import reduce
 
 INTEREST_METHODS = {
     'sale.order': {
@@ -48,7 +49,7 @@ def patch_model_methods(env):
                 pass
 
 # TRACE
-all_method_names = reduce(set.union, INTEREST_METHODS.values())
+all_method_names = reduce(set.union, list(INTEREST_METHODS.values()))
 
 
 def get_Model_methods():
@@ -144,8 +145,8 @@ def get_self(frame):
 
         args = inspect.formatargvalues(*args_info)
     except KeyError:
-        print frame.f_code.co_name
-        print args_info
+        print(frame.f_code.co_name)
+        print(args_info)
         raise KeyError
 
     return self, args
@@ -165,21 +166,21 @@ class Tracer(object):
     def print_indent(self, line, newline=False):
         indent = '    ' * self.level
         if newline:
-            print
-        print u'{}{}'.format(indent, line)
+            print()
+        print('{}{}'.format(indent, line))
 
     def print_return_indent(self, line):
         indent = '    ' * (self.level + 1)
-        print u'{}{}'.format(indent, line)
+        print('{}{}'.format(indent, line))
 
     def print_return(self, arg):
         if isinstance(arg, dict):
-            self.print_return_indent(u'return {')
+            self.print_return_indent('return {')
             for key, value in sorted(arg.items()):
-                self.print_return_indent(u'        {!r}: {}'.format(key, value))
-            self.print_return_indent(u'       }')
+                self.print_return_indent('        {!r}: {}'.format(key, value))
+            self.print_return_indent('       }')
         else:
-            self.print_return_indent(u'{} {}'.format('return', arg))
+            self.print_return_indent('{} {}'.format('return', arg))
 
     def trace(self, frame, event, arg):
 
@@ -196,9 +197,9 @@ class Tracer(object):
                 match = re.match('.+/(?:addons|custom_addons)/(.+)', file_path)
                 if match:
                     addon_model_path = match.groups()[0]
-                    self.print_indent(u'# {}:{}'.format(addon_model_path, frame.f_lineno), newline=True)
+                    self.print_indent('# {}:{}'.format(addon_model_path, frame.f_lineno), newline=True)
 
-                self.print_indent(u'{}.{}{}'.format(rs, frame.f_code.co_name, args))
+                self.print_indent('{}.{}{}'.format(rs, frame.f_code.co_name, args))
 
                 return self.trace
 

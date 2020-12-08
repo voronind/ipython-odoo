@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+from functools import reduce
 
 PERM_NAMES = ('read', 'write', 'create', 'unlink')
 PERMS = tuple('perm_' + perm_name for perm_name in PERM_NAMES)
@@ -45,7 +46,7 @@ def get_user_permissions(env, user):
     for rule in interest_groups.mapped('rule_groups'):
         restrictions[rule.model_id].group_rules.append(rule)
 
-    user_model_ids = [model.id for model in restrictions.keys()]
+    user_model_ids = [model.id for model in list(restrictions.keys())]
 
     # 3. global model access
     for model_access in env['ir.model.access'].search([
@@ -78,7 +79,7 @@ def combine(operator, operands):
 
 
 def s(a, b):
-    print(a, b)
+    print((a, b))
     return a + b
 
 
@@ -161,7 +162,7 @@ class RuleNode(object):
 
     def __str__(self):
         if self.value in {'&', '|'}:
-            return u'{self.left} {self.value} {self.right}'.format(self=self)
+            return '{self.left} {self.value} {self.right}'.format(self=self)
         else:
             return str(self.value)
 

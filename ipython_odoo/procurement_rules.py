@@ -77,14 +77,14 @@ def selectable(route):
     if route.warehouse_selectable:
         result.append('warehouse')
 
-    return u' '.join(result)
+    return ' '.join(result)
 
 
 def route_name(route):
     if not route:
         return False
 
-    return u'{route.sequence: 2d}. {route.name} ({route.id}) [{selectable}], [{wh}]'.format(
+    return '{route.sequence: 2d}. {route.name} ({route.id}) [{selectable}], [{wh}]'.format(
         route=route, selectable=selectable(route), wh=route.warehouse_ids)
 
 
@@ -142,13 +142,13 @@ def warehouse_rules(warehouse):
 
 def format_record(record):
     if record:
-        return u'{0.name} ({0.id})'.format(record)
+        return '{0.name} ({0.id})'.format(record)
     else:
-        return u'False'
+        return 'False'
 
 
 def format_sequence_record(record):
-    return u'{: >2} {}'.format(record.sequence if record else '', format_record(record))
+    return '{: >2} {}'.format(record.sequence if record else '', format_record(record))
 
 
 def format_location(location):
@@ -159,12 +159,12 @@ def format_route(route, warehouse):
     string = format_sequence_record(route)
 
     if warehouse in route.warehouse_ids:
-        string += u' ✓'
+        string += ' ✓'
 
     if route.company_id:
-        string += u'\n   {}'.format(format_record(route.company_id))
+        string += '\n   {}'.format(format_record(route.company_id))
 
-    string += u'\n   {}'.format(selectable(route))
+    string += '\n   {}'.format(selectable(route))
 
     return string
 
@@ -174,35 +174,35 @@ def format_rule(rule):
 
     wh = rule.warehouse_id
     if wh.buy_pull_id == rule:
-        string += u' ✓ buy rule\n'
+        string += ' ✓ buy rule\n'
 
     elif wh.manufacture_pull_id == rule:
-        string += u' ✓ man rule\n'
+        string += ' ✓ man rule\n'
 
     elif wh.mto_pull_id == rule:
-        string += u' ✓ mto rule\n'
+        string += ' ✓ mto rule\n'
 
     elif getattr(wh, 'mts_mto_rule_id', None) == rule:
-        string += u' ✓ mts+mto rule\n'
+        string += ' ✓ mts+mto rule\n'
 
     string += format_sequence_record(rule)
 
-    string += u'\n   {}'.format(rule.action)
+    string += '\n   {}'.format(rule.action)
 
     if rule.action == 'move' or rule.procure_method == 'make_to_order':
-        string += u'\n   ' + rule.procure_method
+        string += '\n   ' + rule.procure_method
 
     if rule.action == 'buy':
-        string += u'\n   gpo: {}'.format(rule.group_propagation_option)
+        string += '\n   gpo: {}'.format(rule.group_propagation_option)
 
     # If stock_mts_mto_rule module isn't installed
     mto_rule = getattr(rule, 'mto_rule_id', None)
     mts_rule = getattr(rule, 'mts_rule_id', None)
     if mto_rule or mts_rule:
-        string += u'\n   mto: {}, mts: {}'.format(mto_rule.id, mts_rule.id)
+        string += '\n   mto: {}, mts: {}'.format(mto_rule.id, mts_rule.id)
 
     if rule.location_src_id:
-        string += u'\n   {} ->'.format(format_record(rule.location_src_id))
+        string += '\n   {} ->'.format(format_record(rule.location_src_id))
 
     return string
 
@@ -214,16 +214,16 @@ def print_warehouse_rules(line, user_ns):
     if not result:
         return
 
-    locations = result.values()[0].keys()
+    locations = list(result.values())[0].keys()
 
     attrs = []
     attrs.append([''] + [format_location(location) for location in locations])
 
-    for route, locations in result.items():
+    for route, locations in list(result.items()):
         row = [format_route(route, warehouse)]
         attrs.append(row)
-        for location, rules in locations.items():
-            row.append(u'\n\n'.join(map(format_rule, rules)))
+        for location, rules in list(locations.items()):
+            row.append('\n\n'.join(map(format_rule, rules)))
 
     table = Texttable()
 
@@ -232,4 +232,4 @@ def print_warehouse_rules(line, user_ns):
 
     table.add_rows(attrs)
 
-    print(table.draw())
+    print((table.draw()))
