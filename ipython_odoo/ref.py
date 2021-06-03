@@ -18,7 +18,6 @@ def generate_ref(env):
     Ref_attrs = {}
     for module, names in env.cr.fetchall():
         ModuleRefs = type('ModuleRefs', (), {
-            # '__slots__': names.split(',') + ['_module', '_env'],
             '__slots__': names.split(','),
             '_env': env,
             '_module': module,
@@ -26,7 +25,6 @@ def generate_ref(env):
         })
         Ref_attrs[module] = ModuleRefs()
 
-    Ref_attrs['__slots__'] = list(Ref_attrs.keys())
     Ref = type('Ref', (), Ref_attrs)
 
     return Ref()
