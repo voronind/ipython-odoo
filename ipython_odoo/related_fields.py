@@ -16,7 +16,10 @@ def refferencing_records(env, recordset):
 
     result = []
     for field in many2x_fields.sorted(lambda x: (x.model, x.name)):
-        rel_rs = env[field.model].with_context(active_test=False).search([
+        Model = env[field.model]
+        if Model._abstract:
+            continue
+        rel_rs = Model.with_context(active_test=False).search([
             (field.name, 'in', recordset.ids),
         ])
         if rel_rs:
