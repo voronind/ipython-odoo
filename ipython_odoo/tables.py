@@ -41,7 +41,7 @@ def pad_table(table):
     col_widths = {}
     for col_number in range(col_count):
         col_values = [table[row_number][col_number] for row_number in range(row_count)]
-        col_lengths = list(map(len, list(map(str, col_values))))
+        col_lengths = map(len, map(str, col_values))
         col_widths[col_number] = max(col_lengths)
 
     for col_number in range(col_count):
