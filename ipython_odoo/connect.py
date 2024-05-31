@@ -516,6 +516,6 @@ def commit(user_ns, line):
 
 
 def rollback(user_ns, line):
-    env_line = line if line else 'env'
-    env = eval(env_line, user_ns)
+    env = eval(line or 'env', user_ns)
     env.cr.rollback()
+    env.cache.invalidate()

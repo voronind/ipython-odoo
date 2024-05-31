@@ -80,7 +80,7 @@ def field_detailed_name(field):
     detailed_name = field.name
 
     if field.related:
-        detailed_name += ' → ' + '.'.join(field.related)
+        detailed_name += f' → {field.related}'
 
     return detailed_name
 

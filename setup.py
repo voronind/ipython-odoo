@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    version='0.3.3',
+    version='0.3.4',
     install_requires=[
         'ipython',
         'redbaron',
