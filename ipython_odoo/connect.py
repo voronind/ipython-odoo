@@ -221,20 +221,6 @@ def search(self, ids=None, count=False, {kwargs}):
 '''
 
 
-def model_str(self):
-    if 1 <= len(self) <= 1 and 'name' in self._fields:
-        ids_part = []
-        for record in self:
-            display_name = record.display_name or ''
-
-            if len(display_name) > 40:
-                display_name = display_name[:39] + '…'
-            ids_part.append(f"{record.id}: '{display_name}'")
-        return '{}({})'.format(self._name, ', '.join(ids_part))
-
-    return "{}{}".format(self._name, getattr(self, '_ids', ""))
-
-
 def model_add_search(model):
     kwarg_names = get_search_func_kwargs(model)
 
@@ -269,9 +255,6 @@ def patch_models(env):
     for model in env.values():
         model_add_search(model)
         model_add_fields_attr(model)
-
-        model.__class__.__str__ = model_str
-        model.__class__.__repr__ = model_str
 
 
 def recompute(env, field):

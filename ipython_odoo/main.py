@@ -2,6 +2,7 @@ __import__('os').environ['TZ'] = 'UTC'
 __import__('pkg_resources').declare_namespace('odoo.addons')
 
 from .magic import MyMagics
+from .recordset_formatting import setup_recordset_pretty_formatting
 
 # http://localhost:63342/api/file//home/voronin/projects/sintez_addons/sintez_base/__manifest__.py:1
 
@@ -20,6 +21,7 @@ def load_ipython_extension(ipython):
     # new magics or aliases, for example.
     ipython.register_magics(MyMagics)
     ipython.events.register('pre_execute', pre_execute)
+    setup_recordset_pretty_formatting(ipython)
 
 
 def unload_ipython_extension(ipython):
