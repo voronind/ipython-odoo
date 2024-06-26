@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "ipython-odoo"
+version = "0"
+description = ""
+authors = ["Dmitry Voronin <dimka665@gmail.com>"]
+readme = "README.md"
+packages = [{include = "ipython_odoo"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+texttable = "^1.7.0"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+strict = true
+latest-tag = true
+
+[build-system]
+requires = ["poetry-core", "poetry-dynamic-versioning"]
+build-backend = "poetry.core.masonry.api"

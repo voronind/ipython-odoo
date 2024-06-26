@@ -255,9 +255,11 @@ IGNORE_FIELDS = set(MAGIC_COLUMNS) | {BaseModel.CONCURRENCY_CHECK_FIELD, '_barco
 
 
 def model_add_fields_attr(model):
-    fields = {field_name if not iskeyword(field_name) else field_name + '_': field
-              for field_name, field in model._fields.items()
-              if field_name not in IGNORE_FIELDS}
+    fields = {
+        field_name if not iskeyword(field_name) else field_name + '_': field
+        for field_name, field in model._fields.items()
+        if (field_name not in IGNORE_FIELDS) and not field_name.startswith('_')
+    }
 
     Fields = namedtuple('Fields', sorted(fields.keys()))
     model.__class__.f = Fields(**fields)
