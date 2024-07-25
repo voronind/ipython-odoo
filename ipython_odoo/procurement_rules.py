@@ -118,7 +118,7 @@ def warehouse_rules(warehouse):
     warehouse_locations = (env['stock.location'].search([('location_id', 'child_of', warehouse.view_location_id.id)])
                            | env.ref('stock.stock_location_customers'))
 
-    rules = env['procurement.rule'].search([
+    rules = env['stock.rule'].search([
         ('location_id', 'in', warehouse_locations.ids),
         '|', ('warehouse_id', '=', warehouse.id),
              ('warehouse_id', '=', False),
